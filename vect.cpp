@@ -13,6 +13,16 @@ string Vect::typelabel()
 	return "vector";
 }
 
+void* Vect::accessContents()
+{
+	return &x;
+}
+
+Vect *Vect::newMember()
+{
+	return new Vect;
+}
+
 Vect Vect::operator%(Vect B)
 {
     Vect temp;

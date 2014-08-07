@@ -7,6 +7,7 @@ class Vect: public DataType
 		string typelabel();		
 		Vect();		
 		Vect(int setN);
+		Vect *newMember();
 		Vect operator%(Vect B);
 		Vect operator+(Vect B);
 		Vect operator-(Vect B);
@@ -20,6 +21,7 @@ class Vect: public DataType
 		bool Within(Vect A, Vect B);
 		void zero();
 		void resize(int newN);
+		void *accessContents();
 };
 
 extern Vect operator*(float a, Vect B);

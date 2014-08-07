@@ -3,7 +3,8 @@
 class Simulation
 {
 	public:
-		vector<ObjectSpec *> objectParts; // What is an 'object'? Each of these specifies some part of an object
+		vector<DataType *> objectParts; // What is an 'object'? Each of these specifies some part of an object
+		vector<string> partNames; // implements the lookup table between index and variable label
 		
 		vector<Reactor *>reactorList; /* 
 								* Determines part of ObjectSpec, 
@@ -36,8 +37,7 @@ class Simulation
 		vector<Analyzer*> analyzerList; // things that analyze the results
 		vector<void*> Drivers; // things that mess with the simulation
 		
-		vector<void*> spatialContainers; // vector of distinct containers for objects
-		vector<void*> objects; // Global list of objects
+		vector<Container*> spatialContainers; // vector of distinct containers for objects
 		
 		vector<Interaction> getCollisionList();
 		Simulation();
