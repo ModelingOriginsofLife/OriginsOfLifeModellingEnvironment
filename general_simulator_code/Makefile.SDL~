@@ -1,0 +1,25 @@
+#DISPLAYDEFINES = -DFB -DSCRNSHOT -DLINUX -DCURS -DMIKMOD 
+#DISPLAYDEFINES = -DX11 -DSCRNSHOT -DLINUX
+#DISPLAYDEFINES = -DSVGA -DSCRNSHOT -DMIKMOD
+DISPLAYDEFINES = -DSDL -DSCRNSHOT -DLINUX -DMIKMOD
+
+MIKMODLIB = `libmikmod-config --libs`
+MIKMODFLAGS = `libmikmod-config --cflags`
+#MIKMODFLAGS = 
+#MIKMODLIB = 
+
+LIBS = -L/usr/X11R6/lib/ -lX11 -lm -lncurses -lSDL -lpthread -lpng   $(MIKMODLIB)
+#LIBS = -L/usr/X11R6/lib/ -lX11 -lm -lncurses -lpng  $(MIKMODLIB)
+#LIBS = -lm -lncurses -lpng $(MIKMODLIB) 
+#LIBS = -lvga -lm -lncurses -lpng   $(MIKMODLIB)
+
+CFLAGS = -O6 -finline-functions -Wno-main $(MIKMODFLAGS) 
+CC = cc $(DISPLAYDEFINES) $(CFLAGS)
+ELDRITCHFLAGS = -o eldritch $(LIBS) 
+MAPEDITFLAGS = -o mapedit $(LIBS) -O6 
+#CMAPEDITFLAGS = -o cmapedit $(LIBS) -O6 
+
+EXTRAOBJ = 
+include Makefile.core
+
+clean: ; rm *.o ; rm eldritch ; rm mapedit 

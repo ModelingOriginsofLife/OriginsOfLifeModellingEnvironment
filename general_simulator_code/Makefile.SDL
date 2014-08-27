@@ -1,0 +1,13 @@
+DEFINES = 
+LIBS = -lm -lpthread 
+CFLAGS = -O6 -m64 -w -finline-functions -Wno-main
+
+CC = cc $(DISPLAYDEFINES) $(CFLAGS)
+ELDRITCHFLAGS = -o eldritch $(LIBS) 
+MAPEDITFLAGS = -o mapedit $(LIBS) -O6 
+#CMAPEDITFLAGS = -o cmapedit $(LIBS) -O6 
+
+EXTRAOBJ = 
+include Makefile.core
+
+clean: ; rm *.o ; rm eldritch ; rm mapedit 

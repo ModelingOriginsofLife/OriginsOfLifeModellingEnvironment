@@ -1,0 +1,27 @@
+LIBRARY
+  A
+  a: A
+  b: A
+  c: A
+  d: A
+ENDSECTION
+
+# Testing empty lines and comments
+
+RULES
+  ADDRULE
+    # Ligation
+    RULE a*+b*=a*b*
+  ENDRULE
+  ADDRULE
+    # Decomposition
+    RULE a*b*=a*+b*
+  ENDRULE
+ENDSECTION
+
+INITIAL
+  LOCATION Bucket
+  COMPOUND A 20 # Add 20 monomers
+ENDSECTION
+
+END

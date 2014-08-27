@@ -1,0 +1,1 @@
+g++ simulation.cpp random.cpp output.cpp weighted_tree.cpp file_parser.cpp reaction_parser.cpp reaction_engine.cpp -o oolme -lm -g -std=c++11 -w
