@@ -73,13 +73,13 @@ int main(int argc, char **argv)
 	
 	for (iter=0;iter<100;iter++)
 	{
-		printf("%d\n",iter);
-		
-		for (subiter=0;subiter<10000;subiter++)
-			C.simTemplate.Iterate(&C);
-			
 		sprintf(Str,"mkdir output/t%d",iter); system(Str);
 		sprintf(Str,"output/t%d",iter);
 		C.simTemplate.writePopulationText(Str);
+
+		printf("%d: %.3g %.3g\n",iter, C.simTemplate.regions[0].getTotalPopulation(), C.simTemplate.regions[0].getTotalLength());
+		
+		for (subiter=0;subiter<10000;subiter++)
+			C.simTemplate.Iterate(&C);
 	}
 }

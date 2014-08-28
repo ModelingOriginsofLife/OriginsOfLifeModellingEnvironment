@@ -1,25 +1,54 @@
 #include "includes.h"
 
+Node::Node()
+{
+	isleaf = true;
+	child[0] = NULL;
+	child[1] = NULL;
+	parent = NULL;
+}
+
 void Tree::deleteLeaf(Node *N)
 {
 	if (N==NULL) return;
-	if (!N->isleaf) { deleteLeaf(N->child[0]); deleteLeaf(N->child[1]); deleteLeaf(N); return; } 
-	if (N->parent == NULL) { delete N; return; }
-	
-	N->modifyWeight(0.0); 	
-	N->parent->isleaf = true;
-	
+	if (!N->isleaf) 
+	{
+		Node *C1 = N->child[0], *C2 = N->child[1]; 
+		deleteLeaf(C1); deleteLeaf(C2); return;
+	} 
+
 	accessHash.erase(N->value);
 	
-	Node *sibling = N->parent->getOtherChild(N);
+	Node *parent = N->parent;	
+	if (parent == NULL) { delete N; return; }
 	
-	N->parent->child[0]=N->parent->child[1]=NULL;
+	N->modifyWeight(0.0, 0.0); 
+		
+	Node *sibling = parent->getOtherChild(N);
 	
-	N->parent->value = sibling->value;
-	N->parent->weight = sibling->weight;
+	// We need to set our grandparent's appropriate child to the sibling rather than moving the sibling's data into this node
 	
-	accessHash[N->parent->value] = N->parent;
+	if (parent->parent == NULL) // If we have no grandparent, the sibling becomes the root node
+	{
+		Root = sibling;
+		sibling->parent = NULL;
+	}
+	else
+	{
+		Node *grandparent = parent->parent;
+		if (grandparent->child[0] == parent)
+			grandparent->child[0] = sibling;
+		else
+			grandparent->child[1] = sibling;
+			
+		sibling->parent = grandparent;			
+	}
 	
+	/*
+	 * Parent and one leaf were removed 
+	 */
+	 
+	delete parent;
 	delete N;
 }
 
@@ -29,22 +58,35 @@ Node *Node::getOtherChild(Node *T)
 	else return child[0];
 }
 
-Node *Node::findRandomLeaf(bool invert)
+Node *Node::findRandomLeaf(WeightingType wType)
 {
 	if (isleaf) return this;
 
 	/* Bit of an optimization - we only ever use this to find the light branch of the tree, so no need to generate random numbers */
-	if (invert)
+	if (wType == WEIGHT_LIGHT)
 	{
-		if (child[0]->weight < child[1]->weight) return child[0]->findRandomLeaf(invert);
-		else return child[1]->findRandomLeaf(invert);
+		if (child[0]->weight < child[1]->weight) return child[0]->findRandomLeaf(wType);
+		else return child[1]->findRandomLeaf(wType);
 	}
-
-	double total = child[0]->weight + child[1]->weight;
-	double r = frand(total);
 	
-	if (r<child[0]->weight) return invert ? child[1]->findRandomLeaf(invert) : child[0]->findRandomLeaf(invert);
-	else return invert ? child[0]->findRandomLeaf(invert) : child[1]->findRandomLeaf(invert);
+	double r, total;
+	
+	if (wType == WEIGHT_HEAVY)
+	{
+		total = child[0]->weight + child[1]->weight;
+		r = frand(total);
+
+		if (r<child[0]->weight) return child[0]->findRandomLeaf(wType);
+		else return child[1]->findRandomLeaf(wType);
+	}
+	else if (wType == WEIGHT_HEAVYLENGTH)
+	{
+		total = child[0]->lweight + child[1]->lweight;
+		r = frand(total);
+
+		if (r<child[0]->lweight) return child[0]->findRandomLeaf(wType);
+		else return child[1]->findRandomLeaf(wType);
+	}	
 }
 
 Node *Tree::addNewLeaf(string val, double w)
@@ -55,44 +97,64 @@ Node *Tree::addNewLeaf(string val, double w)
 		Root->isleaf = true;
 		Root->value = val;
 		Root->weight = w;
+		Root->lweight = w * val.length();
 		Root->parent = NULL;
+		Root->child[0] = NULL;
+		Root->child[1] = NULL;
 		accessHash[val] = Root;
 		return Root;
 	}
 	
-	Node *leaf = Root->findRandomLeaf(true);
+	Node *leaf = Root->findRandomLeaf(WEIGHT_LIGHT);
 	
 	leaf->isleaf = false;
+	
 	leaf->child[0] = new Node;
 	leaf->child[0]->value = leaf->value;
 	leaf->child[0]->weight = leaf->weight;
+	leaf->child[0]->lweight = leaf->lweight;
 	leaf->child[0]->isleaf = true;
 	leaf->child[0]->parent = leaf;
 	
 	accessHash[leaf->child[0]->value] = leaf->child[0];
-	
+
 	leaf->child[1] = new Node;
 	leaf->child[1]->value = val;
 	leaf->child[1]->weight = w;
+	leaf->child[1]->lweight = w * val.length();
 	leaf->child[1]->isleaf = true;
 	leaf->child[1]->parent = leaf;
 	
 	accessHash[val] = leaf->child[1];
 	
-	leaf->modifyWeight(leaf->child[0]->weight + leaf->child[1]->weight);
+	leaf->modifyWeight(leaf->child[0]->weight + leaf->child[1]->weight, 
+					   leaf->child[0]->lweight + leaf->child[1]->lweight);
 	
 	return leaf->child[1];
 }
 
-void Node::modifyWeight(double nw)
+void Node::modifyWeight(double nw, double nwl)
 {
-	double dw = nw-weight;
+	double dw = nw - weight, 
+		   dwl = nwl - lweight;
 	
-	weight = nw;
+	weight = nw; 
+	lweight = nwl;
 	
 	if (parent!=NULL)
 	{
-		parent->modifyWeight(parent->weight+dw);
+		parent->modifyWeight(parent->weight + dw, 
+							 parent->lweight + dwl);
+	}
+}
+
+void Node::writeContents()
+{
+	if (isleaf) printf("%.2g %s,",weight,value.c_str());
+	else
+	{
+		child[0]->writeContents();
+		child[1]->writeContents();
 	}
 }
 

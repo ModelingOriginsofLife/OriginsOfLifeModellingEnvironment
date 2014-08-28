@@ -1,15 +1,19 @@
+enum WeightingType { WEIGHT_HEAVY, WEIGHT_LIGHT, WEIGHT_HEAVYLENGTH };
+
 class Node
 {
 	public:
 		string value;
-		double weight;
+		double weight, lweight;
 		bool isleaf;
 		Node *parent;
 		Node *child[2];
 		
-		Node *findRandomLeaf(bool invert);
-		void modifyWeight(double nw);
+		Node *findRandomLeaf(WeightingType wType);
+		void modifyWeight(double nw, double nwl);
 		Node *getOtherChild(Node *T);
+		void writeContents();
+		Node();
 };
 
 class Tree

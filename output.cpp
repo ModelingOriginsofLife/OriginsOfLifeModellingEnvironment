@@ -13,7 +13,7 @@ void Region::writePopulationText(char *fname)
 		pair<string,int> P;
 		
 		P.first = it->first; 
-		P.second = it->second->weight;
+		P.second = floor(it->second->weight);
 		cList.push_back(P);
 	}
 	

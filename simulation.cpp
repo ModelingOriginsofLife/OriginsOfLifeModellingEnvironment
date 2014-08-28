@@ -1,15 +1,43 @@
 #include "includes.h"
 
+Region::Region()
+{
+}
+
+double Region::getTotalPopulation()
+{
+	double total = 0;
+	
+	if (population.Root != NULL) total += population.Root->weight;
+	if (bath.Root != NULL) total += bath.Root->weight;
+	
+	return total;
+}
+
+double Region::getTotalLength()
+{
+	double total = 0;
+	
+	if (population.Root != NULL) 
+		total += population.Root->lweight;
+	if (bath.Root != NULL) 
+		total += bath.Root->lweight;
+	
+	return total;
+}
+
 void Region::addCompound(string str, int count)
 {
 	Node *leaf;
 	
-	if (bath.accessHash.count(str)) return; // Can't change the concentration of the bath
+	if (bath.accessHash.count(str)) { return; } // Can't change the concentration of the bath
 	
 	if (population.accessHash.count(str))
 	{
 		leaf = population.accessHash[str];
-		leaf->modifyWeight(leaf->weight + count);
+		
+		leaf->modifyWeight(leaf->weight  + count, 
+						   leaf->lweight + count * str.length());
 	}
 	else
 	{
@@ -28,29 +56,42 @@ void Region::removeCompound(string str, int count)
 		leaf = population.accessHash[str];
 		double curPop = leaf->weight;
 		
-		if (curPop<=count)
+		if (curPop-count<=1e-3)
 		{
 			population.deleteLeaf(leaf);
 		}
-		else leaf->modifyWeight(curPop-count);
+		else 
+		{
+			leaf->modifyWeight(curPop-count, leaf->lweight - count * str.length());
+		}
 	}
 }
 
-string Region::pickRandomCompound()
+string Region::pickRandomCompound(WeightingType wType)
 {
-	if (population.Root == NULL) { if (bath.Root == NULL) return ""; else return bath.Root->findRandomLeaf(false)->value; }
-	else if (bath.Root == NULL) return population.Root->findRandomLeaf(false)->value;
+	if (population.Root == NULL) 
+	{ 
+		if (bath.Root == NULL) return ""; 
+		else return bath.Root->findRandomLeaf(wType)->value; 
+	}
+	else if (bath.Root == NULL) 
+		return population.Root->findRandomLeaf(wType)->value;
 	
-	double total = population.Root->weight + bath.Root->weight;
+	double total;
 	
-	if (prand(population.Root->weight / total)) return population.Root->findRandomLeaf(false)->value;
-	else return bath.Root->findRandomLeaf(false)->value;
+	if (wType == WEIGHT_HEAVY) total = population.Root->weight + bath.Root->weight;
+	if (wType == WEIGHT_HEAVYLENGTH) total = population.Root->lweight + bath.Root->lweight;
+	
+	if (prand(population.Root->weight / total)) return population.Root->findRandomLeaf(wType)->value;
+	else return bath.Root->findRandomLeaf(wType)->value;
 }
 
 void Region::doRandomSinglet(ChemistryComputation *C)
 {	
-	vector<string> rList; rList.push_back(pickRandomCompound());
+	vector<string> rList; 
 	
+	rList.push_back(pickRandomCompound(C->singletRate));
+		
 	Outcome P = C->getReactionProducts(rList);
 	
 	if (P.reacted)
@@ -78,12 +119,12 @@ void Region::doRandomDoublet(ChemistryComputation *C)
 {	
 	vector<string> rList; 
 
-	rList.push_back(pickRandomCompound());
-	rList.push_back(pickRandomCompound());
+	rList.push_back(pickRandomCompound(WEIGHT_HEAVY));
+	rList.push_back(pickRandomCompound(WEIGHT_HEAVY));
 	
 	if (rList[0] == rList[1])
 	{
-		if (getConcentration(rList[0])<2) return; // Not enough reactant to make this go!
+		if (getConcentration(rList[0])<2-1e-3) return; // Not enough reactant to make this go!
 	}
 	
 	Outcome P = C->getReactionProducts(rList);
@@ -98,9 +139,11 @@ void Region::doRandomDoublet(ChemistryComputation *C)
 			}
 			
 			for (int i=0;i<rList.size();i++)
+			{
 				removeCompound(rList[i],1);
+			}
 		}
-	}
+	}	
 }
 
 void Simulation::Iterate(ChemistryComputation *C)
@@ -109,12 +152,34 @@ void Simulation::Iterate(ChemistryComputation *C)
 	
 	for (i=0;i<regions.size();i++)
 	{
-		int N=0;
+		double Pdouble, Psingle, P=0;
 		
 		if ((regions[i].population.Root != NULL)||(regions[i].bath.Root != NULL))
 		{
-			regions[i].doRandomSinglet(C);
-			regions[i].doRandomDoublet(C);
+			if (C->singletRate == WEIGHT_HEAVY)
+				Psingle = regions[i].getTotalPopulation();
+			else if (C->singletRate == WEIGHT_HEAVYLENGTH)
+				Psingle = regions[i].getTotalLength();
+				
+			if (C->doubletRate == WEIGHT_HEAVY)
+				Pdouble = regions[i].getTotalPopulation();
+			else if (C->doubletRate == WEIGHT_HEAVYLENGTH)
+				Pdouble = regions[i].getTotalLength();
+				
+			P=Psingle+Pdouble+1e-8;
+			Psingle/=P; Pdouble/=P;
+			
+//			printf("%.6g\n",Psingle);
+			if (prand(Psingle))
+				regions[i].doRandomSinglet(C);
+			else
+				regions[i].doRandomDoublet(C);
 		}
 	}
+}
+
+ChemistryComputation::ChemistryComputation()
+{
+	singletRate = WEIGHT_HEAVY;
+	doubletRate = WEIGHT_HEAVY;
 }

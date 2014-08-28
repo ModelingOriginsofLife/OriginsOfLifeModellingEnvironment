@@ -6,5 +6,6 @@
 #define SECTION_BOUNDARY 5
 #define SECTION_GEOMETRY 6
 #define SECTION_END 7
+#define SECTION_CONFIG 8
 
 extern ChemistryComputation parseConfigFile(ifstream& file);

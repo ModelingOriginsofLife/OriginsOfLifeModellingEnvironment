@@ -8,7 +8,8 @@ unordered_map<string,int> sectionHeaders({
 	{ "CONTROL", SECTION_CONTROL },
 	{ "BOUNDARY", SECTION_BOUNDARY },
 	{ "GEOMETRY", SECTION_GEOMETRY },
-	{ "END", SECTION_END }
+	{ "END", SECTION_END },
+	{ "CONFIG", SECTION_CONFIG }
 });
 
 void parseError(const char *fmt, ...)
@@ -218,6 +219,26 @@ void ChemistryComputation::parseControl(ifstream& file)
 	} while (!istop);
 }
 
+void ChemistryComputation::parseConfig(ifstream& file)
+{
+	int istop = 0;
+	string str, substr;
+	int place = 0;
+	
+	do
+	{
+		getCollapsedLine(file,str);				
+		str = getFirstToken(str, substr);
+	
+		if (substr == "SINGLETRATE")
+		{
+			if (str == "LENGTH") singletRate = WEIGHT_HEAVYLENGTH;
+			else if (str == "MOLECULE") singletRate = WEIGHT_HEAVY;
+		}
+		else if (substr=="ENDSECTION") istop=1;
+	} while (!istop);
+}
+
 void ChemistryComputation::parseRules(ifstream& file)
 {
 	int istop = 0;
@@ -271,6 +292,10 @@ ChemistryComputation parseConfigFile(ifstream& file)
 				
 			case SECTION_CONTROL:
 				C.parseControl(file);
+				break;
+				
+			case SECTION_CONFIG:
+				C.parseConfig(file);
 				break;
 				
 			default:

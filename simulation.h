@@ -8,12 +8,16 @@ class Region
 		
 		void addCompound(string str, int count);
 		void removeCompound(string str, int count);
-		string pickRandomCompound();
+		string pickRandomCompound(WeightingType wType);
 		void writePopulationText(char *FName);
 		double getConcentration(string compound);
 		
 		void doRandomSinglet(ChemistryComputation *C);
 		void doRandomDoublet(ChemistryComputation *C);
+		
+		double getTotalPopulation();
+		double getTotalLength();
+		Region();
 };
 
 /* Simulation
@@ -89,13 +93,15 @@ class ReactionList
  * Because this structure is central to storing the model of the chemistry, it contains the functions which evaluate compounds and their
  * reactions, so a simulation must start by preparing and retaining an instance of this class in a global manner (for that simulation).
  */
-  
+
 class ChemistryComputation 
 {
 	public:
 		Library L;
 		vector<ReactionRule> reactions;
-
+		WeightingType singletRate; // Whether singlet reactions are weighted by molecule count or total length
+		WeightingType doubletRate; // Whether doublet reactions are weighted by molecule count or total length
+		
 		Simulation simTemplate; 
 		unordered_map<string, ChemicalData> compoundHash; // For a given compound string, looks up the energy, chemical vector, etc
 		unordered_map<string, ReactionList> reactionHash; // The accessor to this hash should be the two compounds, separated by ',', listed in lexographic order
@@ -105,7 +111,9 @@ class ChemistryComputation
 		void parseSingleRule(ifstream& file);
 		void parseInitial(ifstream& file);
 		void parseControl(ifstream& file);
+		void parseConfig(ifstream& file);
 		int lookupRegion(string str);
+		ChemistryComputation();
 		
 		Outcome getReactionProducts(vector<string> reactants);
 		string getReactionString(vector<string> reactants);
