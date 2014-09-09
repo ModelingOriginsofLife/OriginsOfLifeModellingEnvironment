@@ -1,0 +1,25 @@
+OoLME To Do List:
+
+- Finish adding simulation/analysis/output control framework
+-- Create Network Exploration mode
+-- Create Reaction Network Output
+-- Heredity Analysis
+-- Packard Plot Analysis
+-- Autocatalysis detection
+-- Transition matrix Output
+
+- Make sure buffer/non-buffer works correctly
+
+- Add language for describing energies of compounds, allow Boltzmann
+factor in reactions
+
+- Add ability to link together multiple zones 
+- Add ability to define transport between zones
+
+- Add ability to use external functions for various things (via dlopen)
+
+- Speed test algorithm, possibly use alternative methods automatically when the
+situation calls for it.
+
+- 'Boundary' section - do we need this, how should it work?
+- Add ability to perturb the simulation mid-run
