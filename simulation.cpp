@@ -1,5 +1,12 @@
 #include "includes.h"
 
+const string AnalysisRequest::simType = "";
+const string AnalysisRequest::analysisType = "";
+
+const string SimulationRequest::simType = "Generic";
+const string SimulationTimeDependent::simType = "TimeDependent";
+const string SimulationExplore::simType = "Explore";
+
 Region::Region()
 {
 }

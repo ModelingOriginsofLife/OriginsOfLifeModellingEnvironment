@@ -133,6 +133,50 @@ void ChemistryComputation::parseLibrary(ifstream& file)
 	} while (!istop);
 }
 
+void ChemistryComputation::parseSingleConjugateSet(ifstream& file, int setidx)
+{
+	string str, substr;
+	int istop = 0;
+	
+	do
+	{
+		getCollapsedLine(file,str);
+		if (str=="ENDSET") istop=1;
+		else
+		{
+			// src sink
+			char label = str[0];
+			int pos = str.find_first_of(" ,");
+			char target = str[pos+1];
+			
+			L.conjugates[setidx][(unsigned char)label] = (unsigned char)target;
+			
+		}
+	} while (!istop);
+}
+
+void ChemistryComputation::parseConjugates(ifstream& file)
+{
+	string str, substr;
+	int istop = 0;
+	int setidx;
+	
+	do
+	{
+		getCollapsedLine(file,str);
+		str = getFirstToken(str, substr);
+		if (substr=="ENDSECTION") istop=1;
+		else if (substr == "SET")
+		{
+			setidx = atoi(str.c_str());
+			
+			L.expandConjugates(setidx);
+			
+			parseSingleConjugateSet(file, setidx);
+		}
+	} while (!istop);
+}
+
 void ChemistryComputation::parseSingleRule(ifstream& file)
 {
 	ReactionRule R;
@@ -273,6 +317,7 @@ ChemistryComputation parseConfigFile(ifstream& file)
 				break;
 			
 			case SECTION_CONJUGATES:
+				C.parseConjugates(file);
 				break;
 			
 			case SECTION_RULES:
@@ -299,7 +344,7 @@ ChemistryComputation parseConfigFile(ifstream& file)
 				break;
 				
 			default:
-				parseError("Invalid section header: %s", str.c_str());
+				parseError("Invalid section header: %s\n", str.c_str());
 				break;
 		}
 	} while (!stop);

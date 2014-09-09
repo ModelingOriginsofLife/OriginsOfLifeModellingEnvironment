@@ -2,9 +2,10 @@ class Library
 {
 	public:
 		vector<char> atomTypes;
-		
+		vector< vector<char> > conjugates; // Conjugation 0 is always the identity, so is a special case. A vector is used here for efficient access compared to a hash.
 		unordered_map<char, vector<char>> atomClasses;
 
+		void expandConjugates(int idx);
 		string conjugateString(string S, int idx);
 		char applyConjugation(char C, int idx);
 		bool isMemberOfSet(char C, char label, int idx);		

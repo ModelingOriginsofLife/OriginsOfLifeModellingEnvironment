@@ -57,6 +57,23 @@ Outcome ChemistryComputation::getReactionProducts(vector<string> reactants)
 		}
 	}
 	
+	for (int i=0;i<reactants.size();i++)
+	{
+		printf("%s%s", i>0 ? " + " : "", reactants[i].c_str());
+	}
+	
+	printf(" = ");
+	
+	for (int i=0;i<R.rList.size();i++)
+	{
+		printf("%s", i>0 ? ", " : "");
+		for (int j=0;j<R.rList[i].products.size();j++)
+		{
+			printf("%s%s", j>0 ? " + " : "", R.rList[i].products[j].c_str());
+		}
+	}
+	
+	printf("\n");
 	reactionHash[reactionString] = R;
 	
 	return R.randomOutcome();

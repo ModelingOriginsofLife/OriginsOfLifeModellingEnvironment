@@ -84,6 +84,72 @@ class ReactionList
 		Outcome randomOutcome();
 };
 
+/* AnalysisRequest
+ * 
+ * This class references a particular sort of analysis method which the user has requested be applied to the simulation(s)
+ * 
+ * The main way these classes function is by callbacks. Each class defines onIteration, onSimulationEnd, onReaction, etc 
+ * functions which contribute to the analysis. References are passed to the simulation state as well as any detailed
+ * information of relevance to the particular kind of callback.
+ * 
+ * For efficiency, bools are defined to determine if a given callback is needed, so that we don't call each thing on each type
+ * of analysis.
+ */
+
+class AnalysisRequest
+{
+	public:
+		static const string simType;
+		static const  string analysisType;
+	
+		void onIteration(Simulation *S);
+		void onSimulationEnd(Simulation *S);
+		void onReaction(Simulation *S, Outcome Reac, Outcome Prod);
+	
+		static const  int iterateCallback = 0;
+		static const  int endCallback = 0;
+		static const  int reactionCallback = 0;
+};
+
+/* SimulationRequest
+ * 
+ * This class contains a specific kind of simulation, as well as the relevant data from the simulation to be used in processing
+ * 
+ * Each AnalysisRequest can specify a certain kind of SimulationRequest. Shared requests are grouped when possible
+ * 
+ */
+
+class SimulationRequest
+{
+	public:
+		static const string simType;
+		bool Iterate(); // Run a single pass of this simulation type. Returns true if the simulation has ended. Some analyses run every iteration (or every N iterations), whereas others run on completion
+};
+
+/* Do a full time-dependent simulation */
+class SimulationTimeDependent : public SimulationRequest
+{
+	public:
+		static const string simType; 
+		bool Iterate();
+		
+	private:
+		int iter, maxiter;		
+		Simulation System;
+};
+
+/* Find all accessible compounds */
+class SimulationExplore : public SimulationRequest
+{
+	public:
+		static const  string simType;
+		bool Iterate();
+		
+	private:
+		int iter, maxiter;		
+		Simulation System;
+};
+
 /* ChemistryComputation
  * 
  * This class contains all the various hashes and data structures used to speed up computing the properties of compounds and their reactions
@@ -106,6 +172,11 @@ class ChemistryComputation
 		unordered_map<string, ChemicalData> compoundHash; // For a given compound string, looks up the energy, chemical vector, etc
 		unordered_map<string, ReactionList> reactionHash; // The accessor to this hash should be the two compounds, separated by ',', listed in lexographic order
 
+		vector<SimulationRequest> jobs;
+		vector<AnalysisRequest> analyses;
+		
+		void parseSingleConjugateSet(ifstream& file, int setidx);
+		void parseConjugates(ifstream& file);
 		void parseLibrary(ifstream& file);
 		void parseRules(ifstream& file);
 		void parseSingleRule(ifstream& file);

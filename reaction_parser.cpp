@@ -101,9 +101,27 @@ void SearchSubtree::parseOnLeaves(vector<Symbol> rule, string matchstr, Library 
 	}
 }
 
+void Library::expandConjugates(int idx)
+{
+	if (conjugates.size() > idx) return;
+	
+	int i;
+	
+	for (i=conjugates.size();i<=idx;i++)
+	{
+		vector<char> newConjugate;
+		
+		newConjugate.resize(256,0);
+		
+		conjugates.push_back(newConjugate);
+	}
+}
+
 char Library::applyConjugation(char C, int idx)
 {
 	if (idx==0) return C;
+	
+	return (conjugates[idx])[(unsigned char)C];
 }
 
 string Library::conjugateString(string S, int idx)
@@ -188,7 +206,8 @@ bool SearchSubtree::isMatch(Symbol S, char C, Library L)
 		}
 		else
 		{
-			bound[S.label][0] = C;
+			string str = ""; str = str + C;
+			bound[S.label] = str; 
 			return true;
 		}
 	}
@@ -210,7 +229,20 @@ void SearchSubtree::applyRule(vector<Symbol> rule, string matchstr, Library L)
 	
 	do
 	{
-		if (strpos >= matchstr.length()) stop=1; // Exceeded length of target compound
+		if (strpos >= matchstr.length()) 
+		{
+			if ((rule[offset].isWild)&&(!bound.count(rule[offset].label))) // This is to check if we can skip this character if we're out of string
+			{
+				branchTree(offset, strpos, rule, matchstr, L);
+				for (i=0;i<subTrees.size();i++)
+				{
+					subTrees[i].applyRule(rule,matchstr,L);
+				}
+				return;
+			} 
+			else 
+				stop=1; // Exceeded length of target compound
+		}
 		else
 		{
 			if (rule[offset].isWild) // Match multiple characters (varying length)
@@ -263,14 +295,14 @@ void SearchSubtree::applyRule(vector<Symbol> rule, string matchstr, Library L)
 				
 				strpos++;
 			}
-					
-			offset++; 
-		}
+		}			
+		
+		offset++; 		
 	} while (!stop && (offset<rule.size()));
 	
 	if (stop)
 	{
-		// No match!
+		// No match!		
 		isNull = true;
 	}
 	else // Got to the end!
@@ -313,9 +345,34 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> rule, stri
 	}
 	else
 	{
-		for (int i=0;i<matchstr.length()-strpos-1;i++) // Try all remaining end-characters for the wildcard
+		char C,C2;
+		int i;
+		
+		// Bit of a hack - match zero-length wildcards
+		// Should bundle this elsewhere to avoid code duplication
+		i=-1;
+		C2 = matchstr[strpos];
+		if (L.isMemberOfSet(C2, rule[offset+1].label, rule[offset+1].doConjugate))
 		{
-			char C = matchstr[i+strpos], C2 = matchstr[i+strpos+1];
+			SearchSubtree Child;
+				
+			Child.bound = bound;
+			if (rule[offset].isBound)
+			{
+				boundString = matchstr.substr(strpos, i+1);
+				Child.bound[rule[offset].label] = boundString;
+			}
+			Child.stringpos = strpos+i+1;
+			Child.rulepos = offset+1;
+			Child.isNull = false;
+			Child.isEnd = false;
+			subTrees.push_back(Child);
+		}
+		
+		// Now lets match wildcards of non-zero length
+		for (i=0;i<matchstr.length()-strpos-1;i++) // Try all remaining end-characters for the wildcard
+		{
+			C = matchstr[i+strpos]; C2 = matchstr[i+strpos+1];
 				
 			if (!L.isMemberOfSet(C, rule[offset].label, rule[offset].doConjugate))
 			{
@@ -341,7 +398,7 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> rule, stri
 					subTrees.push_back(Child);
 				}
 			}
-		}
+		}		
 	}
 }
 

@@ -1,0 +1,52 @@
+LIBRARY
+  A
+  B
+  C
+  -
+  ~
+  N # Null character
+  a: A,B,C,-,~
+  b: A,B,C,-,~
+  c: A,B,C,-,~
+  d: A,B,C,-,~
+  e: A,B,C,-,~
+  f: A,B,C,-,~
+  g: A,B,C,-,~
+  h: A,B,C,-,~
+ENDSECTION
+
+CONJUGATES
+  SET 2
+    A B
+    B C
+    C A
+    - N
+    ~ N
+    N N
+  ENDSET
+ENDSECTION
+
+RULES
+  ADDRULE
+    # Activation
+    RULE f*a-b-c-d + h*a&2-b&2-c&2-d&2 = f*a-b~c-d + h*a&2-b&2-c&2-d&2
+  ENDRULE
+  
+  ADDRULE
+    # Exchange    
+    RULE a*~b* + c*-d* = a*-d* + c*-b*
+  ENDRULE
+ENDSECTION
+
+INITIAL
+  LOCATION Bucket
+  COMPOUND A-C-C-B 20000 # Add 20000 monomers
+  COMPOUND C-B-B-A 20000 # Add 20000 monomers
+  COMPOUND B-A-A-C 20000 # Add 20000 monomers
+ENDSECTION
+
+CONFIG
+  SINGLETRATE LENGTH
+ENDSECTION
+
+END
