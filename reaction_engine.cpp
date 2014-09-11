@@ -1,6 +1,6 @@
 #include "includes.h"
 
-string ChemistryComputation::getReactionString(vector<string> reactants)
+string ChemistryComputation::getReactionString(vector<string> &reactants)
 {
 	string S = "";
 	
@@ -26,7 +26,7 @@ Outcome ReactionList::randomOutcome()
 	return O;
 }
 
-Outcome ChemistryComputation::getReactionProducts(vector<string> reactants)
+Outcome ChemistryComputation::getReactionProducts(vector<string> &reactants)
 {
 	string reactionString = getReactionString(reactants);
 	ReactionList R;
@@ -85,18 +85,16 @@ int main(int argc, char **argv)
 	ChemistryComputation C = parseConfigFile(file);
 	file.close();
 	
-	int iter, subiter;
-	char Str[512];
+	int jobid;
 	
-	for (iter=0;iter<100;iter++)
+	for (jobid = 0; jobid < C.jobs.size(); jobid++)
 	{
-		sprintf(Str,"mkdir output/t%d",iter); system(Str);
-		sprintf(Str,"output/t%d",iter);
-		C.simTemplate.writePopulationText(Str);
-
-		printf("%d: %.3g %.3g\n",iter, C.simTemplate.regions[0].getTotalPopulation(), C.simTemplate.regions[0].getTotalLength());
+		C.jobs[jobid].doSimulation(C);
+	}
+	
+	/*	printf("%d: %.3g %.3g\n",iter, C.simTemplate.regions[0].getTotalPopulation(), C.simTemplate.regions[0].getTotalLength());
 		
 		for (subiter=0;subiter<10000;subiter++)
 			C.simTemplate.Iterate(&C);
-	}
+	*/
 }

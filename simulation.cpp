@@ -1,8 +1,5 @@
 #include "includes.h"
 
-const string AnalysisRequest::simType = "";
-const string AnalysisRequest::analysisType = "";
-
 const string SimulationRequest::simType = "Generic";
 const string SimulationTimeDependent::simType = "TimeDependent";
 const string SimulationExplore::simType = "Explore";
@@ -140,6 +137,19 @@ void Region::doRandomDoublet(ChemistryComputation *C)
 	{
 		if (prand(P.rate))
 		{
+			/* If there are lots of analyses, this will be slow and we 
+			 * should pre-generate the list of applicable ones. However,
+			 * it is unclear whether that is actually the usual case so 
+			 * lets do some profiling before taking that step */
+			 
+			for (int i=0;i<C->analyses.size();i++)
+			{
+				if ((C->analyses[i].reactionCallback)&&(C->analyses[i].simType == C->curSimType)) // This is a bit of a hack, but otherwise we have to thread in info about the simulationrequest to here
+				{
+					C->analyses[i].onReaction(rList, P.products);
+				}
+			}
+			
 			for (int i=0;i<P.products.size();i++)
 			{
 				addCompound(P.products[i],1);
@@ -175,8 +185,7 @@ void Simulation::Iterate(ChemistryComputation *C)
 				
 			P=Psingle+Pdouble+1e-8;
 			Psingle/=P; Pdouble/=P;
-			
-//			printf("%.6g\n",Psingle);
+		
 			if (prand(Psingle))
 				regions[i].doRandomSinglet(C);
 			else
@@ -189,4 +198,62 @@ ChemistryComputation::ChemistryComputation()
 {
 	singletRate = WEIGHT_HEAVY;
 	doubletRate = WEIGHT_HEAVY;
+}
+
+bool SimulationTimeDependent::Iterate(ChemistryComputation &C)
+{
+	for (int i=0;i<subIters;i++)
+		System.Iterate(&C);
+		
+	iter++;
+	
+	if (iter>=maxiter) return true;
+	return false;
+}
+
+void SimulationTimeDependent::setupSimulation(ChemistryComputation &C)
+{
+	System = C.simTemplate;
+}
+
+bool SimulationRequest::Iterate(ChemistryComputation &C)
+{
+}
+
+void SimulationRequest::setupSimulation(ChemistryComputation &C)
+{
+}
+
+void SimulationRequest::doSimulation(ChemistryComputation &C)
+{
+	C.curSimType = simType;
+	
+	setupSimulation(C);
+	
+	while (!Iterate(C))
+	{
+		// do any analyses requested
+		
+		for (int i=0;i<C.analyses.size();i++)
+		{
+			if ((C.analyses[i].iterateCallback)&&(C.analyses[i].simType == simType))
+			{
+				C.analyses[i].iterCounter++;
+				
+				if (C.analyses[i].iterCounter > C.analyses[i].iterFrequency)
+				{
+					C.analyses[i].onIteration(this);
+					C.analyses[i].iterCounter = 0;
+				}
+			}
+		}
+	}
+	
+	for (int i=0;i<C.analyses.size();i++)
+	{
+		if ((C.analyses[i].endCallback)&&(C.analyses[i].simType == simType))
+		{
+			C.analyses[i].onSimulationEnd(this);
+		}
+	}
 }

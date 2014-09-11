@@ -23,3 +23,6 @@ situation calls for it.
 
 - 'Boundary' section - do we need this, how should it work?
 - Add ability to perturb the simulation mid-run
+
+- Triplet and higher order reactions
+- Generalize rules for population-based reaction weighting

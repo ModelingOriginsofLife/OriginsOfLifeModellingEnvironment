@@ -39,3 +39,14 @@ void Simulation::writePopulationText(char *directory)
 	}
 }
 
+bool directoryExists(string dir)
+{
+	using namespace boost::filesystem;
+	return exists(dir);
+}
+
+void makeDirectory(string dir)
+{
+	using namespace boost::filesystem;
+	create_directory(dir);
+}

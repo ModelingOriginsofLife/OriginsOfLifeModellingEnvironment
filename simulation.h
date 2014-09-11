@@ -84,38 +84,13 @@ class ReactionList
 		Outcome randomOutcome();
 };
 
-/* AnalysisRequest
- * 
- * This class references a particular sort of analysis method which the user has requested be applied to the simulation(s)
- * 
- * The main way these classes function is by callbacks. Each class defines onIteration, onSimulationEnd, onReaction, etc 
- * functions which contribute to the analysis. References are passed to the simulation state as well as any detailed
- * information of relevance to the particular kind of callback.
- * 
- * For efficiency, bools are defined to determine if a given callback is needed, so that we don't call each thing on each type
- * of analysis.
- */
-
-class AnalysisRequest
-{
-	public:
-		static const string simType;
-		static const  string analysisType;
-	
-		void onIteration(Simulation *S);
-		void onSimulationEnd(Simulation *S);
-		void onReaction(Simulation *S, Outcome Reac, Outcome Prod);
-	
-		static const  int iterateCallback = 0;
-		static const  int endCallback = 0;
-		static const  int reactionCallback = 0;
-};
-
 /* SimulationRequest
  * 
  * This class contains a specific kind of simulation, as well as the relevant data from the simulation to be used in processing
  * 
  * Each AnalysisRequest can specify a certain kind of SimulationRequest. Shared requests are grouped when possible
+ * 
+ * Question: is it possible to set up things like 'do a simulation for X time, then use that as the initial condition for Y other simulation'?
  * 
  */
 
@@ -123,7 +98,9 @@ class SimulationRequest
 {
 	public:
 		static const string simType;
-		bool Iterate(); // Run a single pass of this simulation type. Returns true if the simulation has ended. Some analyses run every iteration (or every N iterations), whereas others run on completion
+		void setupSimulation(ChemistryComputation &C);
+		bool Iterate(ChemistryComputation &C); // Run a single pass of this simulation type. Returns true if the simulation has ended. Some analyses run every iteration (or every N iterations), whereas others run on completion
+		void doSimulation(ChemistryComputation &C);
 };
 
 /* Do a full time-dependent simulation */
@@ -131,10 +108,13 @@ class SimulationTimeDependent : public SimulationRequest
 {
 	public:
 		static const string simType; 
-		bool Iterate();
-		
-	private:
+		int subIters; // One iteration is one reaction, so this is painfully slow...
 		int iter, maxiter;		
+		
+		void setupSimulation(ChemistryComputation &C);
+		bool Iterate(ChemistryComputation &C);
+		void doSimulation(ChemistryComputation &C);
+		
 		Simulation System;
 };
 
@@ -142,10 +122,11 @@ class SimulationTimeDependent : public SimulationRequest
 class SimulationExplore : public SimulationRequest
 {
 	public:
-		static const  string simType;
-		bool Iterate();
+		static const string simType;
+		void setupSimulation(ChemistryComputation &C);
+		bool Iterate(ChemistryComputation &C);
+		void doSimulation(ChemistryComputation &C);
 		
-	private:
 		int iter, maxiter;		
 		Simulation System;
 };
@@ -160,6 +141,8 @@ class SimulationExplore : public SimulationRequest
  * reactions, so a simulation must start by preparing and retaining an instance of this class in a global manner (for that simulation).
  */
 
+class AnalysisRequest;
+
 class ChemistryComputation 
 {
 	public:
@@ -169,6 +152,8 @@ class ChemistryComputation
 		WeightingType doubletRate; // Whether doublet reactions are weighted by molecule count or total length
 		
 		Simulation simTemplate; 
+		string curSimType;
+		
 		unordered_map<string, ChemicalData> compoundHash; // For a given compound string, looks up the energy, chemical vector, etc
 		unordered_map<string, ReactionList> reactionHash; // The accessor to this hash should be the two compounds, separated by ',', listed in lexographic order
 
@@ -186,6 +171,6 @@ class ChemistryComputation
 		int lookupRegion(string str);
 		ChemistryComputation();
 		
-		Outcome getReactionProducts(vector<string> reactants);
-		string getReactionString(vector<string> reactants);
+		Outcome getReactionProducts(vector<string> &reactants); // Using a reference here means we don't have to allocate/free memory as much
+		string getReactionString(vector<string> &reactants); // Using a reference here means we don't have to allocate/free memory as much
 };
