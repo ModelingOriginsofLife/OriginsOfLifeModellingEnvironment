@@ -97,24 +97,30 @@ class ReactionList
 class SimulationRequest
 {
 	public:
-		static const string simType;
-		void setupSimulation(ChemistryComputation &C);
-		bool Iterate(ChemistryComputation &C); // Run a single pass of this simulation type. Returns true if the simulation has ended. Some analyses run every iteration (or every N iterations), whereas others run on completion
+		string simType;
+		virtual void setupSimulation(ChemistryComputation &C)=0;
+		virtual bool Iterate(ChemistryComputation &C)=0; // Run a single pass of this simulation type. Returns true if the simulation has ended. Some analyses run every iteration (or every N iterations), whereas others run on completion
 		void doSimulation(ChemistryComputation &C);
+		virtual SimulationRequest *clone()=0;
+		void parse(ifstream &file);
+		
+		unordered_map<string, double> numParams;
+		unordered_map<string, string> strParams;
+
 };
 
 /* Do a full time-dependent simulation */
 class SimulationTimeDependent : public SimulationRequest
 {
-	public:
-		static const string simType; 
-		int subIters; // One iteration is one reaction, so this is painfully slow...
-		int iter, maxiter;		
-		
+	public:		
 		void setupSimulation(ChemistryComputation &C);
 		bool Iterate(ChemistryComputation &C);
-		void doSimulation(ChemistryComputation &C);
+//		void doSimulation(ChemistryComputation &C);		
+		SimulationRequest *clone();
 		
+		SimulationTimeDependent();
+
+		int iter;
 		Simulation System;
 };
 
@@ -122,12 +128,14 @@ class SimulationTimeDependent : public SimulationRequest
 class SimulationExplore : public SimulationRequest
 {
 	public:
-		static const string simType;
 		void setupSimulation(ChemistryComputation &C);
 		bool Iterate(ChemistryComputation &C);
-		void doSimulation(ChemistryComputation &C);
+//		void doSimulation(ChemistryComputation &C);
+		SimulationRequest *clone();
 		
-		int iter, maxiter;		
+		SimulationExplore();
+		
+		int iter;
 		Simulation System;
 };
 
@@ -157,8 +165,8 @@ class ChemistryComputation
 		unordered_map<string, ChemicalData> compoundHash; // For a given compound string, looks up the energy, chemical vector, etc
 		unordered_map<string, ReactionList> reactionHash; // The accessor to this hash should be the two compounds, separated by ',', listed in lexographic order
 
-		vector<SimulationRequest> jobs;
-		vector<AnalysisRequest> analyses;
+		vector<SimulationRequest*> jobs;
+		vector<AnalysisRequest*> analyses;
 		
 		void parseSingleConjugateSet(ifstream& file, int setidx);
 		void parseConjugates(ifstream& file);
@@ -174,3 +182,6 @@ class ChemistryComputation
 		Outcome getReactionProducts(vector<string> &reactants); // Using a reference here means we don't have to allocate/free memory as much
 		string getReactionString(vector<string> &reactants); // Using a reference here means we don't have to allocate/free memory as much
 };
+
+extern vector<SimulationRequest*> registeredSimulations;
+extern void registerSimulations();

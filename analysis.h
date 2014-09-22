@@ -14,34 +14,39 @@
 class AnalysisRequest
 {
 	public:
-		static const string simType;
-		static const string analysisType;
+		string simType;
+		string analysisType;
 	
-		int iterFrequency;
-		int iterCounter; // Used to apply onIteration based on iterFrequency
-	
-		void onIteration(SimulationRequest *S);
-		void onSimulationEnd(SimulationRequest *S);
-		void onReaction(vector<string> &reac, vector<string> &prod); // Pointers make everything faster...
-	
-		static const int iterateCallback = 0;
-		static const int endCallback = 0;
-		static const int reactionCallback = 0;
+		unordered_map<string, double> numParams;
+		unordered_map<string, string> strParams;
 		
+		int iterCounter; // Used to apply onIteration based on PERIOD numParam
+	
+		virtual void onIteration(SimulationRequest *SR)=0;
+		virtual void onSimulationEnd(SimulationRequest *SR)=0;
+		virtual void onReaction(vector<string> &reac, vector<string> &prod)=0; // Pointers make everything faster...
+	
+		int iterateCallback = 0;
+		int endCallback = 0;
+		int reactionCallback = 0;
+		
+		AnalysisRequest();
+		virtual AnalysisRequest *clone()=0;
+		void parse(ifstream &file);
 	private:
 		
 };
 
 class AnalysisDistribution : public AnalysisRequest
 {
-	public:
-		static const string simType;
-		static const string analysisType;
-		
-		string outputSubDirectory;
-		
-		void onIteration(SimulationTimeDependent *S);
+	public:		
+		void onIteration(SimulationRequest *SR);
+		void onSimulationEnd(SimulationRequest *SR) {};
+		void onReaction(vector<string> &reac, vector<string> &prod) {}; // Pointers make everything faster...
 	
-		static const int iterateCallback = 1;
+		AnalysisRequest *clone();
+		AnalysisDistribution();
 };
 
+extern vector<AnalysisRequest*> registeredAnalyses;
+extern void registerAnalyses();

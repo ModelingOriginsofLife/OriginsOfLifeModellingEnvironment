@@ -258,8 +258,41 @@ void ChemistryComputation::parseControl(ifstream& file)
 	{
 		getCollapsedLine(file,str);				
 		str = getFirstToken(str, substr);
-	
-		if (substr=="ENDSECTION") istop=1;
+
+		if (substr == "ANALYSIS")
+		{
+			for (int i=0;i<registeredAnalyses.size();i++)
+			{
+				if (str == registeredAnalyses[i]->analysisType)
+				{
+					AnalysisRequest *R = registeredAnalyses[i]->clone();
+					R->parse(file);
+					analyses.push_back(R);
+				}
+			}
+		}
+		else if (substr == "SIMULATE")
+		{
+			for (int i=0;i<registeredSimulations.size();i++)
+			{
+				if (str == registeredSimulations[i]->simType)
+				{
+					SimulationRequest *R = registeredSimulations[i]->clone();					
+					R->parse(file);
+					jobs.push_back(R);
+				}
+			}
+		}
+		else if (substr == "LOAD") // Load initial conditions from a file
+		{
+		}
+		else if (substr == "SAVE") // Save system state to a file during the simulation
+		{
+		}
+		else if (substr == "PERTURB") // Alter system state at particular times during simulation runs
+		{
+		}
+		else if (substr == "ENDSECTION") istop=1;
 	} while (!istop);
 }
 

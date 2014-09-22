@@ -1,8 +1,162 @@
 #include "includes.h"
 
-const string SimulationRequest::simType = "Generic";
-const string SimulationTimeDependent::simType = "TimeDependent";
-const string SimulationExplore::simType = "Explore";
+vector <SimulationRequest*> registeredSimulations;
+
+void registerSimulations()
+{
+	registeredSimulations.push_back(new SimulationTimeDependent);
+	registeredSimulations.push_back(new SimulationExplore);
+}
+
+/* SimulationTimeDependent */
+SimulationTimeDependent::SimulationTimeDependent()
+{
+	simType = "TimeDependent";
+	numParams["SUBITER"] = 10000;
+	numParams["MAXITER"] = 1000;
+}
+
+bool SimulationTimeDependent::Iterate(ChemistryComputation &C)
+{
+	int subIters = numParams["SUBITER"];
+	int maxiter = numParams["MAXITER"];
+	
+	for (int i=0;i<subIters;i++)
+		System.Iterate(&C);
+		
+	iter++;
+	
+	if (iter>=maxiter) return true;
+	return false;
+}
+
+void SimulationTimeDependent::setupSimulation(ChemistryComputation &C)
+{
+	System = C.simTemplate;
+}
+
+SimulationRequest *SimulationTimeDependent::clone()
+{
+	SimulationTimeDependent *T = new SimulationTimeDependent;
+	
+	*T = *this;
+	
+	return T;
+}
+
+/* SimulationExplore */
+SimulationExplore::SimulationExplore()
+{
+	simType = "Explore";
+	numParams["MAXITER"] = 1000;
+}
+
+bool SimulationExplore::Iterate(ChemistryComputation &C)
+{
+	return true;
+}
+
+void SimulationExplore::setupSimulation(ChemistryComputation &C)
+{
+}
+
+SimulationRequest *SimulationExplore::clone()
+{
+	SimulationExplore *T = new SimulationExplore;
+	
+	*T = *this;
+	
+	return T;
+}
+
+/* SimulationRequest */
+/*SimulationRequest *SimulationRequest::clone()
+{
+	SimulationRequest *T = new SimulationRequest;
+	
+	*T = *this;
+	
+	printf("I shouldn't be running this.\n");
+	return T;
+}
+
+bool SimulationRequest::Iterate(ChemistryComputation &C)
+{
+	printf("This code should never run.\n");
+	return true;
+}
+
+void SimulationRequest::setupSimulation(ChemistryComputation &C)
+{
+}
+*/
+void SimulationRequest::doSimulation(ChemistryComputation &C)
+{
+	C.curSimType = simType;
+	
+	setupSimulation(C);
+	
+	while (!Iterate(C))
+	{
+		// do any analyses requested
+		
+		for (int i=0;i<C.analyses.size();i++)
+		{
+			if ((C.analyses[i]->iterateCallback)&&(C.analyses[i]->simType == simType))
+			{
+				C.analyses[i]->iterCounter++;
+				
+				if (C.analyses[i]->iterCounter >= C.analyses[i]->numParams["PERIOD"])
+				{
+					C.analyses[i]->onIteration(this);
+					C.analyses[i]->iterCounter = 0;
+				}
+			}
+		}
+	}
+	
+	for (int i=0;i<C.analyses.size();i++)
+	{
+		if ((C.analyses[i]->endCallback)&&(C.analyses[i]->simType == simType))
+		{
+			C.analyses[i]->onSimulationEnd(this);
+		}
+	}
+}
+
+void SimulationRequest::parse(ifstream &file)
+{
+	int istop = 0;
+	string str, substr;
+	int place = 0;
+	
+	do
+	{
+		getCollapsedLine(file,str);				
+		str = getFirstToken(str, substr);
+		if (substr == "ENDPARAMS") istop = 1;
+		else
+		{
+			if (((str[0] >= '0')&&(str[0] <= '9')) || (str[0] == '-') || (str[0] == '.')) // Numerical parameter
+			{
+				numParams[substr] = atof(str.c_str());
+			}
+			else
+			{
+				if (str[0] == '\"') // remove a leading quote mark
+				{
+					str = str.substr(1,str.length()-1);
+					if (str[str.length()-1] == '\"') // closing the quotes is natural, so remove trailing if present
+						str = str.substr(0,str.length()-1);					
+				}
+				
+				strParams[substr] = str;
+			}
+		}
+	} while (!istop);
+}
+
+/* Region */
 
 Region::Region()
 {
@@ -144,9 +298,9 @@ void Region::doRandomDoublet(ChemistryComputation *C)
 			 
 			for (int i=0;i<C->analyses.size();i++)
 			{
-				if ((C->analyses[i].reactionCallback)&&(C->analyses[i].simType == C->curSimType)) // This is a bit of a hack, but otherwise we have to thread in info about the simulationrequest to here
+				if ((C->analyses[i]->reactionCallback)&&(C->analyses[i]->simType == C->curSimType)) // This is a bit of a hack, but otherwise we have to thread in info about the simulationrequest to here
 				{
-					C->analyses[i].onReaction(rList, P.products);
+					C->analyses[i]->onReaction(rList, P.products);
 				}
 			}
 			
@@ -198,62 +352,4 @@ ChemistryComputation::ChemistryComputation()
 {
 	singletRate = WEIGHT_HEAVY;
 	doubletRate = WEIGHT_HEAVY;
-}
-
-bool SimulationTimeDependent::Iterate(ChemistryComputation &C)
-{
-	for (int i=0;i<subIters;i++)
-		System.Iterate(&C);
-		
-	iter++;
-	
-	if (iter>=maxiter) return true;
-	return false;
-}
-
-void SimulationTimeDependent::setupSimulation(ChemistryComputation &C)
-{
-	System = C.simTemplate;
-}
-
-bool SimulationRequest::Iterate(ChemistryComputation &C)
-{
-}
-
-void SimulationRequest::setupSimulation(ChemistryComputation &C)
-{
-}
-
-void SimulationRequest::doSimulation(ChemistryComputation &C)
-{
-	C.curSimType = simType;
-	
-	setupSimulation(C);
-	
-	while (!Iterate(C))
-	{
-		// do any analyses requested
-		
-		for (int i=0;i<C.analyses.size();i++)
-		{
-			if ((C.analyses[i].iterateCallback)&&(C.analyses[i].simType == simType))
-			{
-				C.analyses[i].iterCounter++;
-				
-				if (C.analyses[i].iterCounter > C.analyses[i].iterFrequency)
-				{
-					C.analyses[i].onIteration(this);
-					C.analyses[i].iterCounter = 0;
-				}
-			}
-		}
-	}
-	
-	for (int i=0;i<C.analyses.size();i++)
-	{
-		if ((C.analyses[i].endCallback)&&(C.analyses[i].simType == simType))
-		{
-			C.analyses[i].onSimulationEnd(this);
-		}
-	}
 }

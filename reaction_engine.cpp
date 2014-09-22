@@ -57,7 +57,7 @@ Outcome ChemistryComputation::getReactionProducts(vector<string> &reactants)
 		}
 	}
 	
-	for (int i=0;i<reactants.size();i++)
+/*	for (int i=0;i<reactants.size();i++)
 	{
 		printf("%s%s", i>0 ? " + " : "", reactants[i].c_str());
 	}
@@ -73,7 +73,7 @@ Outcome ChemistryComputation::getReactionProducts(vector<string> &reactants)
 		}
 	}
 	
-	printf("\n");
+	printf("\n");*/
 	reactionHash[reactionString] = R;
 	
 	return R.randomOutcome();
@@ -81,6 +81,9 @@ Outcome ChemistryComputation::getReactionProducts(vector<string> &reactants)
 
 int main(int argc, char **argv)
 {
+	registerSimulations();
+	registerAnalyses();
+	
 	ifstream file(argv[1]);	
 	ChemistryComputation C = parseConfigFile(file);
 	file.close();
@@ -89,7 +92,7 @@ int main(int argc, char **argv)
 	
 	for (jobid = 0; jobid < C.jobs.size(); jobid++)
 	{
-		C.jobs[jobid].doSimulation(C);
+		C.jobs[jobid]->doSimulation(C);
 	}
 	
 	/*	printf("%d: %.3g %.3g\n",iter, C.simTemplate.regions[0].getTotalPopulation(), C.simTemplate.regions[0].getTotalLength());

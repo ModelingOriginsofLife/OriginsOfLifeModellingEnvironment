@@ -9,3 +9,7 @@
 #define SECTION_CONFIG 8
 
 extern ChemistryComputation parseConfigFile(ifstream& file);
+extern void parseError(const char *fmt, ...);
+extern void getCollapsedLine(ifstream& file, string& str);
+extern string getFirstToken(string input, string& token);
+
