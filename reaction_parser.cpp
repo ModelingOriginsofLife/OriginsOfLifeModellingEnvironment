@@ -223,7 +223,12 @@ void SearchSubtree::applyRule(vector<Symbol> rule, string matchstr, Library L)
 	
 	if (offset>=rule.size())
 	{
-		isEnd = true;
+		if (strpos < matchstr.length())
+		{
+			isNull = true; // Did not finish matching compound
+		}
+		else
+			isEnd = true;
 		return;
 	}
 	
@@ -262,8 +267,10 @@ void SearchSubtree::applyRule(vector<Symbol> rule, string matchstr, Library L)
 						}
 						
 						if (i<tmpStr.length())
+						{
 							stop = 1; // Didn't finish!
-						
+						}
+												
 						strpos += tmpStr.length();
 					}
 					else
@@ -307,7 +314,12 @@ void SearchSubtree::applyRule(vector<Symbol> rule, string matchstr, Library L)
 	}
 	else // Got to the end!
 	{
-		isEnd = true;
+		if (strpos < matchstr.length())
+		{
+			isNull = true; // Did not finish matching compound
+		}
+		else
+			isEnd = true;
 	}
 }
 
@@ -370,9 +382,11 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> rule, stri
 		}
 		
 		// Now lets match wildcards of non-zero length
-		for (i=0;i<matchstr.length()-strpos-1;i++) // Try all remaining end-characters for the wildcard
+		for (i=0;i<matchstr.length()-strpos;i++) // Try all remaining end-characters for the wildcard
 		{
-			C = matchstr[i+strpos]; C2 = matchstr[i+strpos+1];
+			C = matchstr[i+strpos]; 
+			if (i+strpos+1 < matchstr.length())
+				C2 = matchstr[i+strpos+1];
 				
 			if (!L.isMemberOfSet(C, rule[offset].label, rule[offset].doConjugate))
 			{
@@ -381,7 +395,8 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> rule, stri
 			}
 			else
 			{
-				if (L.isMemberOfSet(C2, rule[offset+1].label, rule[offset+1].doConjugate))
+				if ( ( (i+strpos+1 == matchstr.length()) && (rule[offset+1].isWild) && (!bound.count(rule[offset+1].label)) ) 
+					 || L.isMemberOfSet(C2, rule[offset+1].label, rule[offset+1].doConjugate))
 				{
 					SearchSubtree Child;
 				
@@ -450,7 +465,7 @@ void ReactionRule::parseRule(Library L)
 					{
 						case '&':
 								i++;
-								curSymbol.doConjugate=rule[i]-'0';
+								curSymbol.doConjugate=rule[i]-'0'; 
 							break; // Conjugate modifier
 						case '\'':
 							curSymbol.isReversed = true;

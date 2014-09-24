@@ -1,19 +1,31 @@
 class ChemistryComputation;
 
+/* IterationParams allows various hard-coded options to be passed to the chemistry engine */
+
+class IterationParams
+{
+	public:
+		bool adjustConcentrations; // If this is false, only keep track of whether a compound is present or absent
+		bool noRejections; // Never reject a reaction on the basis of rate
+		
+		IterationParams(); 
+};
+
 class Region
 {
 	public:
 		Tree population;
 		Tree bath; // Compounds that are assumed to always be available, and their relative concentrations
 		
+		bool compoundExists(string str);
 		void addCompound(string str, int count);
 		void removeCompound(string str, int count);
 		string pickRandomCompound(WeightingType wType);
 		void writePopulationText(char *FName);
 		double getConcentration(string compound);
 		
-		void doRandomSinglet(ChemistryComputation *C);
-		void doRandomDoublet(ChemistryComputation *C);
+		void doRandomSinglet(ChemistryComputation *C, IterationParams &I);
+		void doRandomDoublet(ChemistryComputation *C, IterationParams &I);
 		
 		double getTotalPopulation();
 		double getTotalLength();
@@ -36,7 +48,7 @@ class Simulation
 		unordered_map<string, int> regionMap;		
 		vector<Region> regions;
 		
-		void Iterate(ChemistryComputation *C);
+		void Iterate(ChemistryComputation *C, IterationParams &I);
 		void writePopulationText(char *directory);
 };
 
@@ -107,36 +119,6 @@ class SimulationRequest
 		unordered_map<string, double> numParams;
 		unordered_map<string, string> strParams;
 
-};
-
-/* Do a full time-dependent simulation */
-class SimulationTimeDependent : public SimulationRequest
-{
-	public:		
-		void setupSimulation(ChemistryComputation &C);
-		bool Iterate(ChemistryComputation &C);
-//		void doSimulation(ChemistryComputation &C);		
-		SimulationRequest *clone();
-		
-		SimulationTimeDependent();
-
-		int iter;
-		Simulation System;
-};
-
-/* Find all accessible compounds */
-class SimulationExplore : public SimulationRequest
-{
-	public:
-		void setupSimulation(ChemistryComputation &C);
-		bool Iterate(ChemistryComputation &C);
-//		void doSimulation(ChemistryComputation &C);
-		SimulationRequest *clone();
-		
-		SimulationExplore();
-		
-		int iter;
-		Simulation System;
 };
 
 /* ChemistryComputation

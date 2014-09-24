@@ -33,3 +33,8 @@ using namespace std;
 #include "file_parser.h"
 #include "random.h"
 #include "output.h"
+#include "linear.h"
+
+#include "simulations/simulationTimeDependent.h"
+#include "analyses/analysisDistribution.h"
+#include "analyses/analysisHeredity.h"

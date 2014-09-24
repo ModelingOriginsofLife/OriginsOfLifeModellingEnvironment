@@ -1,0 +1,78 @@
+LIBRARY
+  a
+  b
+  c
+  d
+  A
+  B
+  C
+  D
+  x: a,b,c,d
+  r: a,b,c,d,A,B,C,D
+  q: a,b,c,d,A,B,C,D
+  X: A,B,C,D
+ENDSECTION
+
+CONJUGATES
+  SET 1
+    a b
+    c d
+    b a
+    d c
+    A b
+    C d
+    B a
+    D c
+  ENDSET
+  SET 2
+    a A
+    b B
+    c C
+    d D
+    A a
+    B b
+    C c
+    D d
+  ENDSET
+ENDSECTION
+
+RULES
+  ADDRULE
+    # Bonding to backbone
+    RULE r*x*q* + x*&1 = r*x*&2q*
+  ENDRULE
+  
+  ADDRULE
+    # Splitting off of backbone
+    RULE r*X*q* = r*X*&2q* + X*&1
+  ENDRULE
+ENDSECTION
+
+INITIAL
+  LOCATION Bucket
+  COMPOUND acca 1
+  COMPOUND b 1
+  COMPOUND a 1
+  COMPOUND c 1
+  COMPOUND d 1
+ENDSECTION
+
+CONFIG
+  SINGLETRATE LENGTH
+ENDSECTION
+
+CONTROL
+  SIMULATE TimeDependent
+     MAXITER 1001
+     SUBITER 10000
+     FIXED_CONCENTRATION true
+     NO_REJECTIONS true
+  ENDPARAMS
+  
+  ANALYSIS Distribution
+     OUTPUT_DIR "output/"
+     PERIOD 100
+  ENDPARAMS
+ENDSECTION
+
+END

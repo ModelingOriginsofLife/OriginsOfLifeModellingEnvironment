@@ -150,7 +150,6 @@ void ChemistryComputation::parseSingleConjugateSet(ifstream& file, int setidx)
 			char target = str[pos+1];
 			
 			L.conjugates[setidx][(unsigned char)label] = (unsigned char)target;
-			
 		}
 	} while (!istop);
 }

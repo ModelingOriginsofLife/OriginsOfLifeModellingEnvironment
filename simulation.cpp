@@ -5,91 +5,8 @@ vector <SimulationRequest*> registeredSimulations;
 void registerSimulations()
 {
 	registeredSimulations.push_back(new SimulationTimeDependent);
-	registeredSimulations.push_back(new SimulationExplore);
 }
 
-/* SimulationTimeDependent */
-SimulationTimeDependent::SimulationTimeDependent()
-{
-	simType = "TimeDependent";
-	numParams["SUBITER"] = 10000;
-	numParams["MAXITER"] = 1000;
-}
-
-bool SimulationTimeDependent::Iterate(ChemistryComputation &C)
-{
-	int subIters = numParams["SUBITER"];
-	int maxiter = numParams["MAXITER"];
-	
-	for (int i=0;i<subIters;i++)
-		System.Iterate(&C);
-		
-	iter++;
-	
-	if (iter>=maxiter) return true;
-	return false;
-}
-
-void SimulationTimeDependent::setupSimulation(ChemistryComputation &C)
-{
-	System = C.simTemplate;
-}
-
-SimulationRequest *SimulationTimeDependent::clone()
-{
-	SimulationTimeDependent *T = new SimulationTimeDependent;
-	
-	*T = *this;
-	
-	return T;
-}
-
-/* SimulationExplore */
-SimulationExplore::SimulationExplore()
-{
-	simType = "Explore";
-	numParams["MAXITER"] = 1000;
-}
-
-bool SimulationExplore::Iterate(ChemistryComputation &C)
-{
-	return true;
-}
-
-void SimulationExplore::setupSimulation(ChemistryComputation &C)
-{
-}
-
-SimulationRequest *SimulationExplore::clone()
-{
-	SimulationExplore *T = new SimulationExplore;
-	
-	*T = *this;
-	
-	return T;
-}
-
-/* SimulationRequest */
-/*SimulationRequest *SimulationRequest::clone()
-{
-	SimulationRequest *T = new SimulationRequest;
-	
-	*T = *this;
-	
-	printf("I shouldn't be running this.\n");
-	return T;
-}
-
-bool SimulationRequest::Iterate(ChemistryComputation &C)
-{
-	printf("This code should never run.\n");
-	return true;
-}
-
-void SimulationRequest::setupSimulation(ChemistryComputation &C)
-{
-}
-*/
 void SimulationRequest::doSimulation(ChemistryComputation &C)
 {
 	C.curSimType = simType;
@@ -156,6 +73,13 @@ void SimulationRequest::parse(ifstream &file)
 	} while (!istop);
 }
 
+/* IterationParams */
+IterationParams::IterationParams()
+{
+	adjustConcentrations = true;
+	noRejections = false;
+}
+
 /* Region */
 
 Region::Region()
@@ -184,10 +108,19 @@ double Region::getTotalLength()
 	return total;
 }
 
+bool Region::compoundExists(string str)
+{
+	if (bath.accessHash.count(str)) { return true; }
+	if (population.accessHash.count(str)) { return true; }
+	
+	return false;
+}
+
 void Region::addCompound(string str, int count)
 {
 	Node *leaf;
 	
+	if (str.length() == 0) return; // ignore zero-length strings
 	if (bath.accessHash.count(str)) { return; } // Can't change the concentration of the bath
 	
 	if (population.accessHash.count(str))
@@ -244,7 +177,7 @@ string Region::pickRandomCompound(WeightingType wType)
 	else return bath.Root->findRandomLeaf(wType)->value;
 }
 
-void Region::doRandomSinglet(ChemistryComputation *C)
+void Region::doRandomSinglet(ChemistryComputation *C, IterationParams &I)
 {	
 	vector<string> rList; 
 	
@@ -258,9 +191,12 @@ void Region::doRandomSinglet(ChemistryComputation *C)
 		{
 			for (int i=0;i<P.products.size();i++)
 			{
-				addCompound(P.products[i],1);
+				if (I.adjustConcentrations || !compoundExists(P.products[i])) // Never increase concentrations during network exploration
+					addCompound(P.products[i],1);
 			}
-			removeCompound(rList[0],1);
+			
+			if (I.adjustConcentrations) // Never remove compounds during network exploration
+				removeCompound(rList[0],1);
 		}
 	}
 }
@@ -273,14 +209,14 @@ double Region::getConcentration(string compound)
 	return 0;
 }
 
-void Region::doRandomDoublet(ChemistryComputation *C)
+void Region::doRandomDoublet(ChemistryComputation *C, IterationParams &I)
 {	
 	vector<string> rList; 
 
 	rList.push_back(pickRandomCompound(WEIGHT_HEAVY));
 	rList.push_back(pickRandomCompound(WEIGHT_HEAVY));
 	
-	if (rList[0] == rList[1])
+	if (I.adjustConcentrations && (rList[0] == rList[1]))
 	{
 		if (getConcentration(rList[0])<2-1e-3) return; // Not enough reactant to make this go!
 	}
@@ -289,7 +225,7 @@ void Region::doRandomDoublet(ChemistryComputation *C)
 	
 	if (P.reacted)
 	{
-		if (prand(P.rate))
+		if (I.noRejections || prand(P.rate))
 		{
 			/* If there are lots of analyses, this will be slow and we 
 			 * should pre-generate the list of applicable ones. However,
@@ -306,18 +242,22 @@ void Region::doRandomDoublet(ChemistryComputation *C)
 			
 			for (int i=0;i<P.products.size();i++)
 			{
-				addCompound(P.products[i],1);
+				if (I.adjustConcentrations || !compoundExists(P.products[i])) // Never increase concentrations during network exploration
+					addCompound(P.products[i],1);
 			}
 			
-			for (int i=0;i<rList.size();i++)
+//			if (I.adjustConcentrations) // Never remove compounds during network exploration
 			{
-				removeCompound(rList[i],1);
+				for (int i=0;i<rList.size();i++)
+				{
+					removeCompound(rList[i],1);
+				}
 			}
 		}
 	}	
 }
 
-void Simulation::Iterate(ChemistryComputation *C)
+void Simulation::Iterate(ChemistryComputation *C, IterationParams &I)
 {
 	int i;
 	
@@ -341,9 +281,9 @@ void Simulation::Iterate(ChemistryComputation *C)
 			Psingle/=P; Pdouble/=P;
 		
 			if (prand(Psingle))
-				regions[i].doRandomSinglet(C);
+				regions[i].doRandomSinglet(C, I);
 			else
-				regions[i].doRandomDoublet(C);
+				regions[i].doRandomDoublet(C, I);
 		}
 	}
 }
