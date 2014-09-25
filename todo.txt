@@ -8,6 +8,8 @@ X Finish adding simulation/analysis/output control framework
 	Autocatalysis detection
 	Transition matrix Output
 
+- Make sure isReversed modifier is applied correctly in applyRule
+
 - Make sure buffer/non-buffer works correctly
 
 - Add language for describing energies of compounds, allow Boltzmann

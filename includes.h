@@ -15,7 +15,10 @@
 
 #include <boost/filesystem.hpp>
 
+#include <armadillo>
+
 using namespace std;
+using namespace arma;
 
 #include <stdio.h>
 #include <stdlib.h>
@@ -36,6 +39,8 @@ using namespace std;
 #include "linear.h"
 
 #include "simulations/simulationTimeDependent.h"
+#include "simulations/simulationReactionChain.h"
+
 #include "analyses/analysisDistribution.h"
 #include "analyses/analysisHeredity.h"
 #include "analyses/analysisReactionNet.h"

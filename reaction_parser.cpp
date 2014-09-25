@@ -19,7 +19,7 @@ string reverseString(string S)
 	return R;
 }
 
-vector<vector<string>> SearchSubtree::generateProducts(vector<vector<Symbol>> rules, Library L)
+vector<vector<string>> SearchSubtree::generateProducts(vector<vector<Symbol>> &rules, Library &L)
 {
 	vector<vector<string>> pList;
 	
@@ -52,7 +52,7 @@ vector<vector<string>> SearchSubtree::generateProducts(vector<vector<Symbol>> ru
 	return pList;
 }
 
-string SearchSubtree::getProduct(vector<Symbol> rule, Library L)
+string SearchSubtree::getProduct(vector<Symbol> &rule, Library &L)
 {
 	int i;
 	string productString = "";
@@ -83,7 +83,7 @@ string SearchSubtree::getProduct(vector<Symbol> rule, Library L)
 	return productString;
 }
 
-void SearchSubtree::parseOnLeaves(vector<Symbol> rule, string matchstr, Library L)
+void SearchSubtree::parseOnLeaves(vector<Symbol> &rule, string matchstr, Library &L)
 {
 	if (subTrees.size() == 0)
 	{
@@ -171,6 +171,18 @@ bool Library::isMemberOfSet(char C, char label, int idx)
 	return false;
 }
 
+char Library::getMemberOfSet(char label, int idx)
+{
+	if (!atomClasses.count(label))
+	{
+		return applyConjugation(label,idx);
+	}	
+	
+	return applyConjugation(atomClasses[label][irand(atomClasses[label].size())], idx);
+	
+	return 0;
+}
+
 void SearchSubtree::writeValidLeaves()
 {
 	if (isNull) return;
@@ -191,7 +203,7 @@ void SearchSubtree::writeValidLeaves()
 		subTrees[i].writeValidLeaves();
 }
 
-bool SearchSubtree::isMatch(Symbol S, char C, Library L)
+bool SearchSubtree::isMatch(Symbol S, char C, Library &L)
 {	
 	if (S.isSingleton)
 	{
@@ -215,7 +227,9 @@ bool SearchSubtree::isMatch(Symbol S, char C, Library L)
 	return true;
 }
 
-void SearchSubtree::applyRule(vector<Symbol> rule, string matchstr, Library L)
+/* TODO: This code does not properly apply the Reversed modifier */
+
+void SearchSubtree::applyRule(vector<Symbol> &rule, string matchstr, Library &L)
 {
 	int offset=rulepos, newoffset, strpos = stringpos;
 	int stop = 0;
@@ -323,7 +337,7 @@ void SearchSubtree::applyRule(vector<Symbol> rule, string matchstr, Library L)
 	}
 }
 
-void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> rule, string matchstr, Library L)
+void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> &rule, string matchstr, Library &L)
 {
 	string boundString = "";
 	// Everything here is not yet bound
@@ -417,7 +431,7 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> rule, stri
 	}
 }
 
-void ReactionRule::parseRule(Library L)
+void ReactionRule::parseRule(Library &L)
 {
 	int i, stop = 0;	
 	Nreac = 0;
@@ -491,7 +505,7 @@ void ReactionRule::parseRule(Library L)
 	else { prodRules.push_back(curRule); Nprod++; }
 }
 
-vector<vector<string>> ReactionRule::getAllProducts(vector<string> reactants, Library L)
+vector<vector<string>> ReactionRule::getAllProducts(vector<string> &reactants, Library &L)
 {
 	SearchSubtree Root;
 	int i=0;
@@ -505,7 +519,7 @@ vector<vector<string>> ReactionRule::getAllProducts(vector<string> reactants, Li
 	return Root.generateProducts(prodRules, L);		
 }
 
-string writeRule(vector<Symbol> rule)
+string writeRule(vector<Symbol> &rule)
 {
 	int i;
 	string rstr = "";

@@ -1,0 +1,38 @@
+LIBRARY
+  A
+  B
+  a: A,B
+  b: A,B
+  c: A,B
+  d: A,B
+ENDSECTION
+
+RULES
+  ADDRULE
+    a* + b* = a*b* # Ligation
+  ENDRULE
+  
+  ADDRULE
+    a*b* = a* + b* # Decomposition
+  ENDRULE
+ENDSECTION
+
+INITIAL
+  LOCATION Bucket
+  BATH AAB 1
+ENDSECTION
+
+CONFIG
+  SINGLETRATE LENGTH
+ENDSECTION
+
+CONTROL
+  SIMULATE ReactionChain
+     MAXITER 10000
+     RANDOM_STARTING_COMPOUND true
+     MEAN_WILDCARD_LENGTH 3
+     STARTING_COMPOUND_RULE a*ba*'
+  ENDPARAMS
+ENDSECTION
+
+END

@@ -5,6 +5,7 @@ vector <SimulationRequest*> registeredSimulations;
 void registerSimulations()
 {
 	registeredSimulations.push_back(new SimulationTimeDependent);
+	registeredSimulations.push_back(new SimulationReactionChain);
 }
 
 void SimulationRequest::doSimulation(ChemistryComputation &C)
@@ -78,6 +79,7 @@ IterationParams::IterationParams()
 {
 	adjustConcentrations = true;
 	noRejections = false;
+	bathReactions = true;
 }
 
 /* Region */
@@ -158,14 +160,14 @@ void Region::removeCompound(string str, int count)
 	}
 }
 
-string Region::pickRandomCompound(WeightingType wType)
+string Region::pickRandomCompound(WeightingType wType, bool includeBath)
 {
 	if (population.Root == NULL) 
 	{ 
-		if (bath.Root == NULL) return ""; 
+		if (!includeBath || (bath.Root == NULL)) return ""; 
 		else return bath.Root->findRandomLeaf(wType)->value; 
 	}
-	else if (bath.Root == NULL) 
+	else if (!includeBath || (bath.Root == NULL))
 		return population.Root->findRandomLeaf(wType)->value;
 	
 	double total;
@@ -181,8 +183,14 @@ void Region::doRandomSinglet(ChemistryComputation *C, IterationParams &I)
 {	
 	vector<string> rList; 
 	
-	rList.push_back(pickRandomCompound(C->singletRate));
-		
+	rList.push_back(pickRandomCompound(C->singletRate, I.bathReactions));
+	
+	if (!rList[0].length()) return;	
+/*	if (!I.bathReactions)
+	{
+		if (bath.accessHash.count(rList[0])) return; // No bath reactions permitted
+	}*/
+	
 	Outcome P = C->getReactionProducts(rList);
 	
 	if (P.reacted)
@@ -213,8 +221,14 @@ void Region::doRandomDoublet(ChemistryComputation *C, IterationParams &I)
 {	
 	vector<string> rList; 
 
-	rList.push_back(pickRandomCompound(WEIGHT_HEAVY));
-	rList.push_back(pickRandomCompound(WEIGHT_HEAVY));
+	rList.push_back(pickRandomCompound(WEIGHT_HEAVY, true));
+	rList.push_back(pickRandomCompound(WEIGHT_HEAVY, I.bathReactions));
+	
+	if (!rList[0].length() || !rList[1].length()) return;
+/*	if (!I.bathReactions)
+	{
+		if (bath.accessHash.count(rList[0]) && bath.accessHash.count(rList[1])) return; // No bath reactions permitted
+	}*/
 	
 	if (I.adjustConcentrations && (rList[0] == rList[1]))
 	{

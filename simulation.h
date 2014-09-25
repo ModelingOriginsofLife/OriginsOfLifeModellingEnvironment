@@ -7,7 +7,7 @@ class IterationParams
 	public:
 		bool adjustConcentrations; // If this is false, only keep track of whether a compound is present or absent
 		bool noRejections; // Never reject a reaction on the basis of rate
-		
+		bool bathReactions; // Allow reactions between pairs of compounds in the bath
 		IterationParams(); 
 };
 
@@ -20,7 +20,7 @@ class Region
 		bool compoundExists(string str);
 		void addCompound(string str, int count);
 		void removeCompound(string str, int count);
-		string pickRandomCompound(WeightingType wType);
+		string pickRandomCompound(WeightingType wType, bool includeBath);
 		void writePopulationText(char *FName);
 		double getConcentration(string compound);
 		
