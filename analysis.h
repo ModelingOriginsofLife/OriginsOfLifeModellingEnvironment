@@ -23,10 +23,12 @@ class AnalysisRequest
 		int iterCounter; // Used to apply onIteration based on PERIOD numParam
 	
 		virtual void onIteration(SimulationRequest *SR)=0;
+		virtual void onSimulationBegin(SimulationRequest *SR)=0;
 		virtual void onSimulationEnd(SimulationRequest *SR)=0;
 		virtual void onReaction(vector<string> &reac, vector<string> &prod)=0; // Pointers make everything faster...
 	
 		int iterateCallback = 0;
+		int beginCallback = 0;
 		int endCallback = 0;
 		int reactionCallback = 0;
 		

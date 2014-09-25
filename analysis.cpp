@@ -6,6 +6,7 @@ void registerAnalyses()
 {
 	registeredAnalyses.push_back(new AnalysisDistribution);
 	registeredAnalyses.push_back(new AnalysisHeredity);
+	registeredAnalyses.push_back(new AnalysisReactionNet);
 }
 
 AnalysisRequest::AnalysisRequest()

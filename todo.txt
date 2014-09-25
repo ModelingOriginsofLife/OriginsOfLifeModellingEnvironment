@@ -2,7 +2,7 @@ OoLME To Do List:
 
 X Finish adding simulation/analysis/output control framework
 	X Create Network Exploration mode
-	Create Reaction Network Output
+	X Create Reaction Network Output
 	Heredity Analysis
 	Packard Plot Analysis
 	Autocatalysis detection

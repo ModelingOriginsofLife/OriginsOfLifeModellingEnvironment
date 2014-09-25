@@ -38,3 +38,4 @@ using namespace std;
 #include "simulations/simulationTimeDependent.h"
 #include "analyses/analysisDistribution.h"
 #include "analyses/analysisHeredity.h"
+#include "analyses/analysisReactionNet.h"

@@ -2,7 +2,7 @@ CC = g++
 CFLAGS = -O6 -m64 -std=c++11 -w -fpermissive
 LIBS = -lm -lboost_system -lboost_filesystem
 
-ANALYSES = analyses/analysisDistribution.o analyses/analysisHeredity.o
+ANALYSES = analyses/analysisDistribution.o analyses/analysisHeredity.o analyses/analysisReactionNet.o
 SIMULATIONS = simulations/simulationTimeDependent.o
 
 OBJ = simulation.o random.o output.o weighted_tree.o file_parser.o \
@@ -19,4 +19,4 @@ oolme: $(OBJ)
 .PHONY: clean
 
 clean:
-	rm -f *.o *~ oolme
+	rm -f *.o analyses/*.o simulations/*.o *~ oolme
