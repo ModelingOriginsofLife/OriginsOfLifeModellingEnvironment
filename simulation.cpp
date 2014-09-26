@@ -179,9 +179,10 @@ string Region::pickRandomCompound(WeightingType wType, bool includeBath)
 	else return bath.Root->findRandomLeaf(wType)->value;
 }
 
-void Region::doRandomSinglet(ChemistryComputation *C, IterationParams &I)
+void Region::doRandomSinglet(IterationParams &I)
 {	
 	vector<string> rList; 
+	ChemistryComputation *C = parentSimulation->parentChem;
 	
 	rList.push_back(pickRandomCompound(C->singletRate, I.bathReactions));
 	
@@ -217,10 +218,11 @@ double Region::getConcentration(string compound)
 	return 0;
 }
 
-void Region::doRandomDoublet(ChemistryComputation *C, IterationParams &I)
+void Region::doRandomDoublet(IterationParams &I)
 {	
 	vector<string> rList; 
-
+	ChemistryComputation *C = parentSimulation->parentChem;
+	
 	rList.push_back(pickRandomCompound(WEIGHT_HEAVY, true));
 	rList.push_back(pickRandomCompound(WEIGHT_HEAVY, I.bathReactions));
 	
@@ -250,7 +252,7 @@ void Region::doRandomDoublet(ChemistryComputation *C, IterationParams &I)
 			{
 				if ((C->analyses[i]->reactionCallback)&&(C->analyses[i]->simType == C->curSimType)) // This is a bit of a hack, but otherwise we have to thread in info about the simulationrequest to here
 				{
-					C->analyses[i]->onReaction(rList, P.products);
+					C->analyses[i]->onReaction(rList, P.products, this);
 				}
 			}
 			
@@ -271,10 +273,11 @@ void Region::doRandomDoublet(ChemistryComputation *C, IterationParams &I)
 	}	
 }
 
-void Simulation::Iterate(ChemistryComputation *C, IterationParams &I)
+void Simulation::Iterate(IterationParams &I)
 {
 	int i;
-	
+	ChemistryComputation *C = parentChem;
+	 
 	for (i=0;i<regions.size();i++)
 	{
 		double Pdouble, Psingle, P=0;
@@ -295,11 +298,19 @@ void Simulation::Iterate(ChemistryComputation *C, IterationParams &I)
 			Psingle/=P; Pdouble/=P;
 		
 			if (prand(Psingle))
-				regions[i].doRandomSinglet(C, I);
+				regions[i].doRandomSinglet(I);
 			else
-				regions[i].doRandomDoublet(C, I);
+				regions[i].doRandomDoublet(I);
 		}
 	}
+}
+
+void Simulation::connectToChemistry(ChemistryComputation *C)
+{
+	parentChem = C;
+	
+	for (int i=0;i<regions.size();i++)
+		regions[i].parentSimulation = this;
 }
 
 ChemistryComputation::ChemistryComputation()

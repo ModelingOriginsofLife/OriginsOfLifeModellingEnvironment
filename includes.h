@@ -42,5 +42,6 @@ using namespace arma;
 #include "simulations/simulationReactionChain.h"
 
 #include "analyses/analysisDistribution.h"
+#include "analyses/analysisOutputTimeseries.h"
 #include "analyses/analysisHeredity.h"
 #include "analyses/analysisReactionNet.h"

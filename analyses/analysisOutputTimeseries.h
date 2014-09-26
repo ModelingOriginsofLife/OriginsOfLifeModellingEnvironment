@@ -1,4 +1,4 @@
-class AnalysisDistribution : public AnalysisRequest
+class AnalysisOutputTimeseries: public AnalysisRequest
 {
 	public:		
 		void onIteration(SimulationRequest *SR);
@@ -7,6 +7,6 @@ class AnalysisDistribution : public AnalysisRequest
 		void onReaction(vector<string> &reac, vector<string> &prod, Region *Reg) {}; // Pointers make everything faster...
 	
 		AnalysisRequest *clone();
-		AnalysisDistribution();
+		AnalysisOutputTimeseries();
 };
 

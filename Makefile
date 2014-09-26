@@ -1,8 +1,8 @@
 CC = g++
-CFLAGS = -O6 -m64 -std=c++0x -w -fpermissive
+CFLAGS = -g -std=c++0x -w -fpermissive
 LIBS = -lm -lboost_system -lboost_filesystem -larmadillo
 
-ANALYSES = analyses/analysisDistribution.o analyses/analysisHeredity.o analyses/analysisReactionNet.o
+ANALYSES = analyses/analysisDistribution.o analyses/analysisHeredity.o analyses/analysisReactionNet.o analyses/analysisOutputTimeseries.o
 SIMULATIONS = simulations/simulationTimeDependent.o simulations/simulationReactionChain.o
 
 OBJ = simulation.o random.o output.o weighted_tree.o file_parser.o \

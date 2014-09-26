@@ -112,6 +112,7 @@ bool SimulationReactionChain::Iterate(ChemistryComputation &C)
 	I.bathReactions = false;
 	
 	System = C.simTemplate; // Reset the system each iteration for this kind of simulation
+	System.connectToChemistry(&C);
 	
 	for (i=0;i<System.regions.size();i++)
 	{
@@ -128,7 +129,7 @@ bool SimulationReactionChain::Iterate(ChemistryComputation &C)
 	
 	for (int j=0;j<depth;j++)
 	{
-		System.Iterate(&C, I);
+		System.Iterate(I);
 		for (i=0;i<System.regions.size();i++)
 		{			
 			// Restrict the region back down to a single compound

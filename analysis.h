@@ -25,7 +25,7 @@ class AnalysisRequest
 		virtual void onIteration(SimulationRequest *SR)=0;
 		virtual void onSimulationBegin(SimulationRequest *SR)=0;
 		virtual void onSimulationEnd(SimulationRequest *SR)=0;
-		virtual void onReaction(vector<string> &reac, vector<string> &prod)=0; // Pointers make everything faster...
+		virtual void onReaction(vector<string> &reac, vector<string> &prod, Region *Reg)=0; // Pointers make everything faster...
 	
 		int iterateCallback;
 		int beginCallback;

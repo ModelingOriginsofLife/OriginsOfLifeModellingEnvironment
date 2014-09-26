@@ -103,7 +103,7 @@ void AnalysisReactionNet::onSimulationEnd(SimulationRequest *SR)
 	fclose(f); 
 }
 
-void AnalysisReactionNet::onReaction(vector<string> &reac, vector<string> &prod)
+void AnalysisReactionNet::onReaction(vector<string> &reac, vector<string> &prod, Region *Reg)
 {
 	string rxnString = "";
 	

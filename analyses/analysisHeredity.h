@@ -4,7 +4,7 @@ class AnalysisHeredity: public AnalysisRequest
 		void onIteration(SimulationRequest *SR);
 		void onSimulationBegin(SimulationRequest *SR) {};
 		void onSimulationEnd(SimulationRequest *SR) {};
-		void onReaction(vector<string> &reac, vector<string> &prod) {}; // Pointers make everything faster...
+		void onReaction(vector<string> &reac, vector<string> &prod, Region *Reg) {}; // Pointers make everything faster...
 	
 		AnalysisRequest *clone();
 		AnalysisHeredity();		

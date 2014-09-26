@@ -11,11 +11,14 @@ class IterationParams
 		IterationParams(); 
 };
 
+class Simulation;
+
 class Region
 {
 	public:
 		Tree population;
 		Tree bath; // Compounds that are assumed to always be available, and their relative concentrations
+		Simulation *parentSimulation;
 		
 		bool compoundExists(string str);
 		void addCompound(string str, int count);
@@ -24,8 +27,8 @@ class Region
 		void writePopulationText(char *FName);
 		double getConcentration(string compound);
 		
-		void doRandomSinglet(ChemistryComputation *C, IterationParams &I);
-		void doRandomDoublet(ChemistryComputation *C, IterationParams &I);
+		void doRandomSinglet(IterationParams &I);
+		void doRandomDoublet(IterationParams &I);
 		
 		double getTotalPopulation();
 		double getTotalLength();
@@ -47,8 +50,10 @@ class Simulation
 	public:
 		unordered_map<string, int> regionMap;		
 		vector<Region> regions;
+		ChemistryComputation *parentChem;
 		
-		void Iterate(ChemistryComputation *C, IterationParams &I);
+		void connectToChemistry(ChemistryComputation *C);
+		void Iterate(IterationParams &I);
 		void writePopulationText(char *directory);
 };
 
@@ -118,7 +123,6 @@ class SimulationRequest
 		
 		unordered_map<string, double> numParams;
 		unordered_map<string, string> strParams;
-
 };
 
 /* ChemistryComputation

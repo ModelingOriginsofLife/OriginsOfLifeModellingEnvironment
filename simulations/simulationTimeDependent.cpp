@@ -26,7 +26,7 @@ bool SimulationTimeDependent::Iterate(ChemistryComputation &C)
 	else I.noRejections = true;
 
 	for (int i=0;i<subIters;i++)
-		System.Iterate(&C, I);
+		System.Iterate(I);
 		
 	iter++;
 	
@@ -37,6 +37,7 @@ bool SimulationTimeDependent::Iterate(ChemistryComputation &C)
 void SimulationTimeDependent::setupSimulation(ChemistryComputation &C)
 {
 	System = C.simTemplate;
+	System.connectToChemistry(&C);
 }
 
 SimulationRequest *SimulationTimeDependent::clone()
