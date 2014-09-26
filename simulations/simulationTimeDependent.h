@@ -5,6 +5,7 @@ class SimulationTimeDependent : public SimulationRequest
 		void setupSimulation(ChemistryComputation &C);
 		bool Iterate(ChemistryComputation &C);
 		SimulationRequest *clone();
+		void executeSimulation(ChemistryComputation &C);
 		
 		SimulationTimeDependent();
 

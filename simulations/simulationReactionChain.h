@@ -10,4 +10,7 @@ class SimulationReactionChain : public SimulationRequest
 
 		int iter;
 		Simulation System;
+		
+		unordered_map<string, long int> normalizationMatrix;
+		unordered_map<string, long int> transitionMatrix;
 };

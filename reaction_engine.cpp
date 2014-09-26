@@ -92,7 +92,7 @@ int main(int argc, char **argv)
 	
 	for (jobid = 0; jobid < C.jobs.size(); jobid++)
 	{
-		C.jobs[jobid]->doSimulation(C);
+		C.jobs[jobid]->executeSimulation(C);
 	}
 	
 	/*	printf("%d: %.3g %.3g\n",iter, C.simTemplate.regions[0].getTotalPopulation(), C.simTemplate.regions[0].getTotalLength());

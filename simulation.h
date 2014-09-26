@@ -118,6 +118,7 @@ class SimulationRequest
 		virtual void setupSimulation(ChemistryComputation &C)=0;
 		virtual bool Iterate(ChemistryComputation &C)=0; // Run a single pass of this simulation type. Returns true if the simulation has ended. Some analyses run every iteration (or every N iterations), whereas others run on completion
 		void doSimulation(ChemistryComputation &C);
+		virtual void executeSimulation(ChemistryComputation &C) { doSimulation(C); }
 		virtual SimulationRequest *clone()=0;
 		void parse(ifstream &file);
 		
