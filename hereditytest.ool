@@ -1,0 +1,59 @@
+LIBRARY
+  A
+  a: A
+  b: A
+  c: A
+  d: A
+ENDSECTION
+
+RULES
+  ADDRULE
+     RULE a* + b* = a*b*
+  ENDRULE
+  
+  ADDRULE
+     RULE a*b* = a* + b*
+  ENDRULE
+ENDSECTION
+
+INITIAL
+  LOCATION Bucket
+  BATH A 10000
+ENDSECTION
+
+CONFIG
+  SINGLETRATE LENGTH
+ENDSECTION
+
+CONTROL
+  SIMULATE TimeDependent
+     MAXITER 1000
+     REPEAT 1000
+  ENDPARAMS
+  
+  ANALYSIS Distribution
+     OUTPUT_DIR "output/"
+  ENDPARAMS
+  
+  ANALYSIS OutputTimeseries
+     PERIOD 10
+     OUTPUT_DIR "output_ts/"
+     PER_REGION false
+     OUTPUT_NUMBER true
+     OUTPUT_LENGTH true
+     OUTPUT_SYMBOLS true
+  ENDPARAMS
+  
+  ANALYSIS Heredity
+     RANDOM_KNOCKOUTS true
+     BEGIN_ITER 100
+     PERIOD 10
+     KNOCKOUT_COUNT 10
+     KNOCKOUT_MEAN_WILDCARD_LENGTH 3
+     KNOCKOUT_RULE a*AAAAb*
+     PCA_ANALYSIS true
+     ENTROPY_ANALYSIS true
+  ENDPARAMS
+ENDSECTION
+
+END

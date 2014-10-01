@@ -38,6 +38,12 @@ void SimulationTimeDependent::setupSimulation(ChemistryComputation &C)
 {
 	System = C.simTemplate;
 	System.connectToChemistry(&C);
+	iter = 0;
+	
+	for (int i=0;i<C.analyses.size();i++)
+	{
+		C.analyses[i]->iterCounter = 0;
+	}
 }
 
 SimulationRequest *SimulationTimeDependent::clone()

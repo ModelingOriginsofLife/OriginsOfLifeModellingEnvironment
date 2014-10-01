@@ -250,6 +250,7 @@ void Region::doRandomDoublet(IterationParams &I)
 	rList.push_back(pickRandomCompound(WEIGHT_HEAVY, I.bathReactions));
 	
 	if (!rList[0].length() || !rList[1].length()) return;
+
 /*	if (!I.bathReactions)
 	{
 		if (bath.accessHash.count(rList[0]) && bath.accessHash.count(rList[1])) return; // No bath reactions permitted
@@ -262,8 +263,8 @@ void Region::doRandomDoublet(IterationParams &I)
 	
 	Outcome P = C->getReactionProducts(rList);
 	
-	for (int i=0;i<rList.size();i++)
-		if (checkKnockout(rList[i])) return; // Product compound is specifically excluded
+	for (int i=0;i<P.products.size();i++)
+		if (checkKnockout(P.products[i])) { return; } // Product compound is specifically excluded
 	
 	if (P.reacted)
 	{

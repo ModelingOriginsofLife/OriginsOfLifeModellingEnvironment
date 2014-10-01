@@ -7,6 +7,8 @@ void AnalysisDistribution::onIteration(SimulationRequest *SR)
 	string outputSubDirectory = strParams["OUTPUT_DIR"];
 	char Str[512];
 		
+	printf("Writing distribution for %d\n", S->iter);
+		
 	if (!directoryExists(outputSubDirectory))
 		makeDirectory(outputSubDirectory);
 	

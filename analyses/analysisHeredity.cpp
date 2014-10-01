@@ -73,13 +73,14 @@ void AnalysisHeredity::onSimulationBegin(SimulationRequest *SR)
 		for (int i=0;i<nKnock;i++)
 		{
 			string compound = generateRandomCompound(rule, *C, wildlength);
-
-			S->System.knockouts.insert(compound);
+			if (compound.length())
+			{
+				S->System.knockouts.insert(compound);
+			}
 		}
 	}
 	
-	HeredityRunData HR;
-	
+	HeredityRunData HR;	
 	runs.push_back(HR);
 }	
 
@@ -89,7 +90,7 @@ void AnalysisHeredity::PCAHeredity()
 	int maxval = endStates.frames.size();
 	vector<int> cCount;
 	vector<int> cMap;
-	
+/*	
 	cCount.resize(cidx, 0);	
 	
 	for (int j=0;j<maxval;j++)
@@ -116,14 +117,14 @@ void AnalysisHeredity::PCAHeredity()
 			k++;
 		}
 	}
-	
+	*/
 	mat data(maxval, vCols, fill::zeros);
 	
 	for (int j=0;j<maxval;j++)
 	{
 		for (unordered_set<string>::iterator it = endStates.frames[j].compounds.begin(); it != endStates.frames[j].compounds.end(); ++it)
 		{
-			int idx = cMap[cIndex[*it]];
+			int idx = cIndex[*it]; // Use cMap to reduce the matrix
 	
 			if (idx >= 0)
 			{
@@ -139,6 +140,8 @@ void AnalysisHeredity::PCAHeredity()
 	int nVals = vCols;
 	if (maxval < nVals) nVals = maxval;
 	
+	printf("Performing PCA of %d x %d matrix\n", data.n_rows, data.n_cols);
+	
 	doPCA(data, eigvals, princomps, scores, nVals);
 
 	string outputSubDirectory = strParams["OUTPUT_DIR_PCA"];
@@ -146,10 +149,11 @@ void AnalysisHeredity::PCAHeredity()
 	if (!directoryExists(outputSubDirectory))
 		makeDirectory(outputSubDirectory);
 		
-	string filename = outputSubDirectory + "eigenvalues.txt";
+	string filename = outputSubDirectory + "/eigenvalues.txt";
 	
 	FILE *f=fopen(filename.c_str(),"wb");
-	for (int i=0;i<nVals;i++)
+	
+	for (int i=0;i<eigvals.n_rows;i++)
 		fprintf(f,"%.9g\n", eigvals(i));
 	fclose(f);
 
@@ -159,7 +163,7 @@ void AnalysisHeredity::PCAHeredity()
 	
 	memset(cutoff,0,sizeof(double)*4);
 	
-	for (int i=0;i<nVals;i++)
+	for (int i=0;i<eigvals.n_rows;i++)
 	{
 		if (eigvals(i) > threshold*0.5) cutoff[0]++;
 		if (eigvals(i) > threshold*0.25) cutoff[1]++;
@@ -167,7 +171,7 @@ void AnalysisHeredity::PCAHeredity()
 		if (eigvals(i) > threshold*0.05) cutoff[3]++;
 	}
 
-	filename = outputSubDirectory + "heredity_measure.csv";	
+	filename = outputSubDirectory + "/heredity_measure.csv";	
 	
 	f=fopen(filename.c_str(),"rb");
 	
@@ -183,12 +187,12 @@ void AnalysisHeredity::PCAHeredity()
 	fprintf(f,"%d, %.9g, %.9g, %.9g, %.9g\n", simidx, cutoff[0]+1, cutoff[1]+1, cutoff[2]+1, cutoff[3]+1);
 	fclose(f);
 
-	filename = outputSubDirectory + "pca_scores.txt";	
+	filename = outputSubDirectory + "/pca_scores.txt";	
 	
 	f=fopen(filename.c_str(),"wb");
-	for (int i=0;i<maxval;i++)
+	for (int i=0;i<scores.n_rows;i++)
 	{
-		for (int j=0;j<nVals;j++)
+		for (int j=0;j<scores.n_cols;j++)
 		{
 			fprintf(f,"%.9g ", scores(i,j));
 		}
