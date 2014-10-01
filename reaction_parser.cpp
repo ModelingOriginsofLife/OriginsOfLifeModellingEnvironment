@@ -7,6 +7,17 @@ void Symbol::clear()
 	label=' ';	
 }
 
+void reverseStringInPlace(string &S)
+{
+	for (int i=0;i<S.length()/2;i++)
+	{
+		int j = S.length()-i-1;
+		char Ch = S[j];
+		S[j] = S[i];
+		S[i] = Ch;
+	}
+}
+
 string reverseString(string S)
 {
 	string R = "";
@@ -227,7 +238,7 @@ bool SearchSubtree::isMatch(Symbol S, char C, Library &L)
 	return true;
 }
 
-/* TODO: This code does not properly apply the Reversed modifier */
+/* TODO: This code may not properly apply the Reversed modifier */
 
 void SearchSubtree::applyRule(vector<Symbol> &rule, string matchstr, Library &L)
 {
@@ -274,7 +285,10 @@ void SearchSubtree::applyRule(vector<Symbol> &rule, string matchstr, Library &L)
 						string tmpStr = bound[rule[offset].label];
 						
 						tmpStr = L.conjugateString(tmpStr,rule[offset].doConjugate);
-						
+												
+						if (rule[offset].isReversed)
+							reverseStringInPlace(tmpStr);//tmpStr = reverseString(tmpStr);
+							
 						for (i=0;(!stop)&&(i<tmpStr.length())&&(i+strpos < matchstr.length());i++)
 						{
 							if (tmpStr[i] != matchstr[i]) stop = 1; // No match
@@ -364,6 +378,9 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> &rule, str
 			if (rule[offset].isBound)
 			{
 				boundString = matchstr.substr(strpos, matchstr.length()-strpos);
+				if (rule[offset].isReversed)
+					reverseStringInPlace(boundString);// = reverseString(boundstring);
+					
 				bound[rule[offset].label] = boundString;
 			}
 			return;
@@ -386,6 +403,8 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> &rule, str
 			if (rule[offset].isBound)
 			{
 				boundString = matchstr.substr(strpos, i+1);
+				if (rule[offset].isReversed)
+					reverseStringInPlace(boundString);// = reverseString(boundstring);
 				Child.bound[rule[offset].label] = boundString;
 			}
 			Child.stringpos = strpos+i+1;
@@ -418,6 +437,8 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> &rule, str
 					if (rule[offset].isBound)
 					{
 						boundString = matchstr.substr(strpos, i+1);
+						if (rule[offset].isReversed)
+							reverseStringInPlace(boundString);// = reverseString(boundstring);
 						Child.bound[rule[offset].label] = boundString;
 					}
 					Child.stringpos = strpos+i+1;
@@ -533,4 +554,80 @@ string writeRule(vector<Symbol> &rule)
 	}
 	
 	return rstr;
+}
+
+string generateRandomCompound(string rulestr, ChemistryComputation &C, double meanLength)
+{
+	ReactionRule R;
+	unordered_map<char, string> bound;
+	double continueChance = meanLength/(1.0+meanLength);
+	string compound = "";
+	
+	R.rule = rulestr;
+	R.parseRule(C.L);
+	
+	for (int i=0;i<R.reacRules[0].size();i++)
+	{
+		Symbol S = R.reacRules[0][i];
+		
+		if (S.isWild)
+		{
+			if (S.isBound)
+			{
+				if (bound.count(S.label))
+				{
+					if (S.isReversed)
+						compound = compound + reverseString(bound[S.label]);
+					else
+						compound = compound + bound[S.label];
+				}
+				else
+				{
+					string substr = "";
+					
+					while (prand(continueChance))
+					{
+						substr = substr + C.L.getMemberOfSet(S.label, S.doConjugate);
+					} 
+					
+					if (S.isReversed) reverseStringInPlace(substr);//substr = reverseString(substr);
+					
+					compound = compound + substr;
+					bound[S.label] = substr;
+				}
+			}
+			else
+			{
+				while (prand(continueChance))
+				{
+					compound = compound + C.L.getMemberOfSet(S.label, S.doConjugate);
+				}
+			}
+		}
+		else
+		{
+			if (S.isBound)
+			{
+				if (bound.count(S.label))
+				{
+					compound = compound + bound[S.label];
+				}
+				else
+				{
+					string substr = "";
+					
+					substr = substr + C.L.getMemberOfSet(S.label, S.doConjugate);
+					compound = compound + substr;
+					
+					bound[S.label] = substr;
+				}
+			}
+			else
+			{
+				compound = compound + C.L.getMemberOfSet(S.label, S.doConjugate);
+			}
+		}
+	}
+		
+	return compound;
 }

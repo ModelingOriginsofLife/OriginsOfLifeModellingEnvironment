@@ -31,3 +31,5 @@ situation calls for it.
 
 - Triplet and higher order reactions
 - Generalize rules for population-based reaction weighting
+
+- Consider control structures that allow analyses to be tied to specific regions more generally, or to repeat analyses for each region separately, or to average over the entire system

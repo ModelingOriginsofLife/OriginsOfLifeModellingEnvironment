@@ -59,3 +59,7 @@ class ReactionRule
 };
 
 extern string reverseString(string S);
+extern void reverseStringInPlace(string &S);
+
+class ChemistryComputation;
+extern string generateRandomCompound(string rulestr, ChemistryComputation &C, double meanLength);

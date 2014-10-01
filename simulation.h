@@ -20,6 +20,9 @@ class Region
 		Tree bath; // Compounds that are assumed to always be available, and their relative concentrations
 		Simulation *parentSimulation;
 		
+		unordered_set<string> knockouts; // This adds to any global knockouts defined for the simulation
+		bool checkKnockout(string& compound);
+		
 		bool compoundExists(string str);
 		void addCompound(string str, int count);
 		void removeCompound(string str, int count);
@@ -32,6 +35,7 @@ class Region
 		
 		double getTotalPopulation();
 		double getTotalLength();
+		
 		Region();
 };
 
@@ -51,6 +55,7 @@ class Simulation
 		unordered_map<string, int> regionMap;		
 		vector<Region> regions;
 		ChemistryComputation *parentChem;
+		unordered_set<string> knockouts;
 		
 		void connectToChemistry(ChemistryComputation *C);
 		void Iterate(IterationParams &I);

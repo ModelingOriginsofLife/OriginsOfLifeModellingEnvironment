@@ -51,7 +51,8 @@ SimulationRequest *SimulationTimeDependent::clone()
 
 void SimulationTimeDependent::executeSimulation(ChemistryComputation &C)
 {
-	printf("Overload succeeded!\n");
 	for (int i=0;i<numParams["REPEAT"];i++)
+	{		
 		doSimulation(C);
+	}
 }

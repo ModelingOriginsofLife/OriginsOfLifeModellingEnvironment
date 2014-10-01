@@ -13,6 +13,8 @@ void registerAnalyses()
 AnalysisRequest::AnalysisRequest()
 {
 	numParams["PERIOD"] = 1;
+	numParams["BEGIN_ITER"] = 0;
+	numParams["END_ITER"] = -1;
 }
 
 void AnalysisRequest::parse(ifstream &file)

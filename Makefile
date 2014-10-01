@@ -6,7 +6,7 @@ ANALYSES = analyses/analysisDistribution.o analyses/analysisHeredity.o analyses/
 SIMULATIONS = simulations/simulationTimeDependent.o simulations/simulationReactionChain.o
 
 OBJ = simulation.o random.o output.o weighted_tree.o file_parser.o \
-reaction_parser.o reaction_engine.o analysis.o $(ANALYSES) $(SIMULATIONS) 
+reaction_parser.o reaction_engine.o analysis.o linear.o $(ANALYSES) $(SIMULATIONS) 
 
 %.o: %.cpp
 	$(CC) -c -o $@ $< $(CFLAGS)

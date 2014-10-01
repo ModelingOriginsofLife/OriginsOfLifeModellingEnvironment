@@ -14,23 +14,38 @@ void SimulationRequest::doSimulation(ChemistryComputation &C)
 	
 	setupSimulation(C);
 	
+	for (int i=0;i<C.analyses.size();i++)
+	{
+		if ((C.analyses[i]->beginCallback)&&(C.analyses[i]->simType == simType))
+		{
+			C.analyses[i]->onSimulationBegin(this);					
+		}
+	}
+	
+	int globalIterCounter = 0;
 	while (!Iterate(C))
 	{
 		// do any analyses requested
-		
 		for (int i=0;i<C.analyses.size();i++)
 		{
 			if ((C.analyses[i]->iterateCallback)&&(C.analyses[i]->simType == simType))
 			{
 				C.analyses[i]->iterCounter++;
 				
-				if (C.analyses[i]->iterCounter >= C.analyses[i]->numParams["PERIOD"])
+				if ((C.analyses[i]->iterCounter >= C.analyses[i]->numParams["PERIOD"]) && (C.analyses[i]->iterCounter >= C.analyses[i]->numParams["BEGIN_ITER"]))
 				{
-					C.analyses[i]->onIteration(this);
-					C.analyses[i]->iterCounter = 0;
+					int end = C.analyses[i]->numParams["END_ITER"];
+					
+					if ((end<0)||(globalIterCounter < end))
+					{
+						C.analyses[i]->onIteration(this);
+						C.analyses[i]->iterCounter = 0;
+					}
 				}
 			}
 		}
+		
+		globalIterCounter++;
 	}
 	
 	for (int i=0;i<C.analyses.size();i++)
@@ -218,6 +233,14 @@ double Region::getConcentration(string compound)
 	return 0;
 }
 
+bool Region::checkKnockout(string &compound)
+{
+	if (knockouts.count(compound)) return true;
+	if (parentSimulation->knockouts.count(compound)) return true;
+	
+	return false;
+}
+
 void Region::doRandomDoublet(IterationParams &I)
 {	
 	vector<string> rList; 
@@ -238,6 +261,9 @@ void Region::doRandomDoublet(IterationParams &I)
 	}
 	
 	Outcome P = C->getReactionProducts(rList);
+	
+	for (int i=0;i<rList.size();i++)
+		if (checkKnockout(rList[i])) return; // Product compound is specifically excluded
 	
 	if (P.reacted)
 	{
@@ -262,7 +288,7 @@ void Region::doRandomDoublet(IterationParams &I)
 					addCompound(P.products[i],1);
 			}
 			
-//			if (I.adjustConcentrations) // Never remove compounds during network exploration
+			if (I.adjustConcentrations) // Never remove compounds during network exploration
 			{
 				for (int i=0;i<rList.size();i++)
 				{
