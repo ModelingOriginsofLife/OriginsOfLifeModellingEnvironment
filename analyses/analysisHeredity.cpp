@@ -1,5 +1,48 @@
 #include "../includes.h"
 
+int HeredityRunData::getFeatureCount(int vCols, double threshold, unordered_map<string, int> &cIndex)
+{
+	int maxval = frames.size();
+	
+	mat data(maxval, vCols, fill::ones);
+	
+	data = -1 * data;
+	
+	mat cov;
+	
+	for (int j=0;j<frames.size();j++)
+	{
+		for (unordered_set<string>::iterator it = frames[j].compounds.begin(); it != frames[j].compounds.end(); ++it)
+		{
+			int idx = cIndex[*it]; 
+	
+			if (idx >= 0)
+			{
+				data(j,idx) = 1;
+			}
+		}
+	}
+	
+	cov = data.t() * data / maxval;
+	
+	for (int i=0;i<cov.n_rows;i++)
+	{
+		bool stop=false;
+		for (int j=0;(j<i)&&(!stop);j++)
+		{
+			if (fabs(cov(i,j)) > threshold)
+			{
+				cov.shed_row(i);
+				cov.shed_col(i);
+				i--;
+				stop=true;
+			}
+		}
+	}
+	
+	return cov.n_rows;
+}
+
 double HeredityRunData::getEntropy()
 {
 	unordered_map<string, int> counts;
@@ -34,6 +77,13 @@ void AnalysisHeredity::onIteration(SimulationRequest *SR)
 	
 	// Regions are all lumped together - lets do this differently in the future, or give multiple options
 	HereditySnapshot HS;
+	ReactionRule RRule;
+	
+	if (strParams["RANDOM_KNOCKOUTS"] != "false")
+	{
+		RRule.rule = strParams["KNOCKOUT_RULE"];
+		RRule.parseRule(Sim->parentChem->L);
+	}
 	
 	for (int i=0;i<Sim->regions.size();++i)
 	{
@@ -42,15 +92,26 @@ void AnalysisHeredity::onIteration(SimulationRequest *SR)
 				
 		for (it=R->population.accessHash.begin();it!=R->population.accessHash.end();++it)
 		{
-			if (it->second->weight >= threshold)
+			bool accept = true;
+			// Exclude compounds that match the knockout rule
+			if (strParams["RANDOM_KNOCKOUTS"] != "false")
 			{
-				if (!cIndex.count(it->first))
+				if (RRule.matchCompound(it->first, Sim->parentChem->L))
 				{
-					cIndex[it->first] = cidx++;
+					accept = false;
 				}
+			}
+
+			if (accept)
+				if (it->second->weight >= threshold)
+				{
+					if (!cIndex.count(it->first))
+					{
+						cIndex[it->first] = cidx++;
+					}
 								
-				HS.compounds.insert(it->first);
-			}			
+					HS.compounds.insert(it->first);
+				}			
 		}
 	}
 	
@@ -73,6 +134,7 @@ void AnalysisHeredity::onSimulationBegin(SimulationRequest *SR)
 		for (int i=0;i<nKnock;i++)
 		{
 			string compound = generateRandomCompound(rule, *C, wildlength);
+			
 			if (compound.length())
 			{
 				S->System.knockouts.insert(compound);
@@ -201,6 +263,38 @@ void AnalysisHeredity::PCAHeredity()
 	fclose(f);
 }
 
+void AnalysisHeredity::FeatureEliminationHeredity()
+{
+	int endFeatures;
+	double runFeatures = 0;	
+	double threshold = numParams["FEATURE_ELIMINATION_THRESHOLD"];
+	
+	for (int i=0;i<runs.size();i++)
+	{
+		double tmp = runs[i].getFeatureCount(cidx, threshold, cIndex);
+		if (tmp > runFeatures) runFeatures = tmp;
+	}
+	
+//	runFeatures /= (double)runs.size();
+	
+	endFeatures = endStates.getFeatureCount(cidx, threshold, cIndex);
+	
+	string filename = strParams["FEATURE_ELIMINATION_OUTPUT"];	
+	
+	FILE *f = fopen(filename.c_str(), "rb");
+	
+	if (f == NULL)
+	{
+		f=fopen(filename.c_str(), "wb");
+		fprintf(f,"Runs, runFeatures, finalFeatures, difference\n");
+		fclose(f);
+	} else fclose(f);
+	
+	f = fopen(filename.c_str(), "a");
+	fprintf(f,"%d, %.6g, %.6g, %.6g\n", simidx, runFeatures, (double)endFeatures, (double)(endFeatures - runFeatures));
+	fclose(f);
+}
+
 void AnalysisHeredity::EntropyHeredity()
 {
 	double Hbar = 0, Hcross = 0;
@@ -256,6 +350,11 @@ void AnalysisHeredity::onSimulationEnd(SimulationRequest *SR)
 		PCAHeredity();
 	}
 	
+	if (strParams["FEATURE_ELIMINATION_ANALYSIS"] != "false")
+	{
+		FeatureEliminationHeredity();
+	}
+	
 	if (strParams["ENTROPY_ANALYSIS"] != "false")
 	{
 		EntropyHeredity();
@@ -278,6 +377,9 @@ AnalysisHeredity::AnalysisHeredity()
 	numParams["DETECTION_THRESHOLD"] = 0.5;
 	strParams["KNOCKOUT_RULE"] = "";
 	strParams["PCA_ANALYSIS"] = "false";
+	strParams["FEATURE_ELIMINATION_ANALYSIS"] = "false";
+	strParams["FEATURE_ELIMINATION_OUTPUT"] = "heredity_elimination.txt";
+	numParams["FEATURE_ELIMINATION_THRESHOLD"] = 0.9;
 	strParams["OUTPUT_DIR_PCA"] = "heredity_PCA";
 	strParams["ENTROPY_ANALYSIS"] = "false";
 	strParams["ENTROPY_OUTPUT"] = "heredity_entropy.txt";

@@ -19,6 +19,7 @@ class Symbol
 		bool isSingleton;
 		bool isReversed;
 		bool isBound;
+		int maxlen;
 		int doConjugate;
 		
 		char label;
@@ -35,6 +36,7 @@ class SearchSubtree
 		unordered_map<char, string> bound;
 		vector<SearchSubtree> subTrees;
 				
+		bool matchExists();
 		bool isMatch(Symbol S, char C, Library &L);		
 		void parseOnLeaves(vector<Symbol> &rule, string matchstr, Library &L);
 		vector<vector<string>> generateProducts(vector<vector<Symbol>> &rule, Library &L);
@@ -52,6 +54,8 @@ class ReactionRule
 		int Nreac, Nprod;
 		double k; // Underlying rate constant
 		
+		bool matchCompound(const string &compound, Library &L); // Matches a compound to the first reaction rule
+
 		vector<vector<string>> (*overrideProducts)(vector<string> &reactants, Library &L); // Support for a custom function here; still takes a library though
 		
 		vector<vector<string>> getAllProducts(vector<string> &reactants, Library &L);

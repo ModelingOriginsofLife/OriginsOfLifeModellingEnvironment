@@ -8,6 +8,7 @@ class HeredityRunData
 {
 	public:
 		vector<HereditySnapshot> frames;
+		int getFeatureCount(int vCols, double threshold, unordered_map<string, int> &cIndex);
 		
 		double getEntropy();
 };
@@ -20,6 +21,7 @@ class AnalysisHeredity: public AnalysisRequest
 		void onSimulationEnd(SimulationRequest *SR);
 		void onReaction(vector<string> &reac, vector<string> &prod, Region *Reg) {}; // Pointers make everything faster...
 		void PCAHeredity();
+		void FeatureEliminationHeredity();
 		void EntropyHeredity();
 	
 		AnalysisRequest *clone();

@@ -4,6 +4,7 @@ void Symbol::clear()
 {
 	isWild = isSingleton = isReversed = isBound = false;
 	doConjugate = 0;
+	maxlen = 0;
 	label=' ';	
 }
 
@@ -194,6 +195,25 @@ char Library::getMemberOfSet(char label, int idx)
 	return 0;
 }
 
+bool SearchSubtree::matchExists()
+{
+	if (isNull) return false;
+
+	if (isEnd)
+	{
+		if (subTrees.size() == 0)
+		{
+			return true;
+		}
+		else return false;
+	}
+	
+	for (int i=0;i<subTrees.size();i++)
+		if (subTrees[i].matchExists()) return true;
+		
+	return false;
+}
+
 void SearchSubtree::writeValidLeaves()
 {
 	if (isNull) return;
@@ -355,19 +375,20 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> &rule, str
 {
 	string boundString = "";
 	// Everything here is not yet bound
+	Symbol *thisrule = &rule[offset];
 	
 	if (offset == rule.size()-1) // This is the terminal wildcard...
 	{
 		int totalmatch = 1;
 		
-		for (int i=0;i<matchstr.length()-strpos;i++) // Try all remaining end-characters for the wildcard
+		for (int i=0;(i<matchstr.length()-strpos)&&( !thisrule->maxlen || i<thisrule->maxlen );i++) // Try all remaining end-characters for the wildcard
 		{
 			char C = matchstr[i+strpos];
 			
 			if (!L.isMemberOfSet(C, rule[offset].label, rule[offset].doConjugate)) totalmatch = 0;
 		}
 		
-		if (!totalmatch)
+		if ((!totalmatch)||( thisrule->maxlen && (matchstr.length()-strpos>thisrule->maxlen)))
 		{
 			isNull = true;
 			return;
@@ -415,7 +436,7 @@ void SearchSubtree::branchTree(int offset, int strpos, vector<Symbol> &rule, str
 		}
 		
 		// Now lets match wildcards of non-zero length
-		for (i=0;i<matchstr.length()-strpos;i++) // Try all remaining end-characters for the wildcard
+		for (i=0;(i<matchstr.length()-strpos)&&( !thisrule->maxlen || i<thisrule->maxlen );i++) // Try all remaining end-characters for the wildcard
 		{
 			C = matchstr[i+strpos]; 
 			if (i+strpos+1 < matchstr.length())
@@ -496,8 +517,18 @@ void ReactionRule::parseRule(Library &L)
 				}
 				else
 				{
+					string mlstring = "";
 					switch (rule[i])
 					{
+						case '<':
+								do
+								{
+									i++;
+									mlstring = mlstring + rule[i];
+								} while ( (i+1 < rule.size()) && (( rule[i+1]>='0' )&&( rule[i+1] <= '9')) );
+								
+								curSymbol.maxlen = atoi(mlstring.c_str())-1;
+							break;
 						case '&':
 								i++;
 								curSymbol.doConjugate=rule[i]-'0'; 
@@ -556,6 +587,18 @@ string writeRule(vector<Symbol> &rule)
 	return rstr;
 }
 
+bool ReactionRule::matchCompound(const string &compound, Library &L)
+{
+	SearchSubtree Root;
+	
+	Root.isNull = false; Root.isEnd = true;
+	Root.rulepos = 0; Root.stringpos = 0;
+
+	Root.parseOnLeaves(reacRules[0], compound, L);	
+	
+	return Root.matchExists();
+}
+
 string generateRandomCompound(string rulestr, ChemistryComputation &C, double meanLength)
 {
 	ReactionRule R;
@@ -584,10 +627,12 @@ string generateRandomCompound(string rulestr, ChemistryComputation &C, double me
 				else
 				{
 					string substr = "";
+					int len = 0;
 					
-					while (prand(continueChance))
+					while (prand(continueChance)&&( !S.maxlen || len<S.maxlen ))
 					{
 						substr = substr + C.L.getMemberOfSet(S.label, S.doConjugate);
+						len++;
 					} 
 					
 					if (S.isReversed) reverseStringInPlace(substr);//substr = reverseString(substr);
@@ -598,9 +643,12 @@ string generateRandomCompound(string rulestr, ChemistryComputation &C, double me
 			}
 			else
 			{
-				while (prand(continueChance))
+				int len = 0;
+				
+				while (prand(continueChance)&&( !S.maxlen || len<S.maxlen ))
 				{
 					compound = compound + C.L.getMemberOfSet(S.label, S.doConjugate);
+					len++;
 				}
 			}
 		}
