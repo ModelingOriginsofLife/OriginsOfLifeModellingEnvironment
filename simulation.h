@@ -34,7 +34,9 @@ class Region
 		void doRandomDoublet(IterationParams &I);
 		
 		double getTotalPopulation();
-		double getTotalLength();
+		double getTotalLength();		
+		
+		//Region &operator=(const Region &other);
 		
 		Region();
 };
@@ -60,6 +62,8 @@ class Simulation
 		void connectToChemistry(ChemistryComputation *C);
 		void Iterate(IterationParams &I);
 		void writePopulationText(char *directory);
+		
+		//Simulation &operator=(const Simulation &other);
 };
 
 class Outcome

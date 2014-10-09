@@ -1,0 +1,93 @@
+LIBRARY
+  A
+  B
+  C
+  -
+  ~
+  N # Null character
+  a: A,B,C,-,~
+  b: A,B,C,-,~
+  c: A,B,C,-,~
+  d: A,B,C,-,~
+  e: A,B,C,-,~
+  f: A,B,C,-,~
+  g: A,B,C,-,~
+  h: A,B,C,-,~
+  i: A,B,C
+  j: A,B,C
+  k: A,B,C
+  l: A,B,C
+  m: A,B,C
+  n: A,B,C
+ENDSECTION
+
+CONJUGATES
+  SET 2
+    A B
+    B C
+    C A
+    - N
+    ~ N
+    N N
+  ENDSET
+ENDSECTION
+
+RULES
+  ADDRULE
+    # Activation
+    RULE f*a-b-c-dg* + h*a&2-b&2-c&2-d&2 = f*a-b~c-dg* + h*a&2-b&2-c&2-d&2
+  ENDRULE
+  
+  ADDRULE
+    # Exchange    
+    RULE a*~b* + c*-d* = a*-d* + c*-b*
+  ENDRULE
+ENDSECTION
+
+INITIAL
+  LOCATION Bucket
+  BATH A-B-B-C 10000
+  BATH B-C-C-A 10000
+  BATH C-A-A-B 10000
+  COMPOUND C-B-C-C-A-A 10
+ENDSECTION
+
+CONFIG
+  SINGLETRATE LENGTH
+ENDSECTION
+
+CONTROL
+  SIMULATE TimeDependent
+     MAXITER 3000
+     REPEAT 1000
+  ENDPARAMS
+  
+  ANALYSIS Distribution
+     OUTPUT_DIR "output/"
+  ENDPARAMS
+  
+  ANALYSIS OutputTimeseries
+     PERIOD 10
+     OUTPUT_DIR "output_ts/"
+     PER_REGION false
+     OUTPUT_NUMBER true
+     OUTPUT_LENGTH true
+     OUTPUT_SYMBOLS true
+  ENDPARAMS
+  
+  ANALYSIS Heredity
+     RANDOM_KNOCKOUTS true
+     BEGIN_ITER 1000
+     PERIOD 200
+     OUTPUT_PERIOD 10
+     DETECTION_THRESHOLD 20
+     KNOCKOUT_COUNT 100
+     KNOCKOUT_MEAN_WILDCARD_LENGTH 2
+     KNOCKOUT_RULE i-j-k-l-m
+     PCA_ANALYSIS true
+     ENTROPY_ANALYSIS true
+     FEATURE_ELIMINATION_ANALYSIS true
+  ENDPARAMS
+ENDSECTION
+
+END

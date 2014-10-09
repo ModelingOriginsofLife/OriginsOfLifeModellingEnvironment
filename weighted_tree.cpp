@@ -89,7 +89,7 @@ Node *Node::findRandomLeaf(WeightingType wType)
 	}	
 }
 
-Node *Tree::addNewLeaf(string val, double w)
+Node *Tree::addNewLeaf(string &val, double w)
 {
 	if (Root == NULL)
 	{
@@ -169,3 +169,37 @@ Tree::~Tree()
 		deleteLeaf(Root);
 	accessHash.clear();
 }
+
+void Tree::addSubtree(Node *N)
+{
+	if (N->isleaf)
+	{
+		addNewLeaf(N->value, N->weight);
+	}
+	else
+	{
+		addSubtree(N->child[0]);
+		addSubtree(N->child[1]);
+	}
+}
+
+Tree &Tree::operator=(const Tree &other)
+{
+	if (Root != NULL)
+		deleteLeaf(Root);
+	Root = NULL;
+	accessHash.clear();
+		
+	if (other.Root != NULL)
+		addSubtree(other.Root);
+	
+	return *this;
+}
+	
+Tree::Tree(const Tree &other)
+{		
+	Root = NULL;
+	if (other.Root != NULL)
+		addSubtree(other.Root);
+}
+	

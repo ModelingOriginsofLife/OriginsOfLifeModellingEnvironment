@@ -261,21 +261,34 @@ void AnalysisHeredity::PCAHeredity()
 		fprintf(f,"\n");
 	}
 	fclose(f);
+
+	filename = outputSubDirectory + "/rawdata.txt";
+	f = fopen(filename.c_str(),"wb");
+	for (int i=0;i<data.n_rows;i++)
+	{
+		for (int j=0;j<data.n_cols;j++)
+		{
+			fprintf(f,"%.9g ", data(i,j));
+		}
+		fprintf(f,"\n");
+	}
+	fclose(f);
 }
 
 void AnalysisHeredity::FeatureEliminationHeredity()
 {
 	int endFeatures;
-	double runFeatures = 0;	
+	double runFeatures = 0, runFeatures_max = 0;	
 	double threshold = numParams["FEATURE_ELIMINATION_THRESHOLD"];
 	
 	for (int i=0;i<runs.size();i++)
 	{
 		double tmp = runs[i].getFeatureCount(cidx, threshold, cIndex);
-		if (tmp > runFeatures) runFeatures = tmp;
+		runFeatures += tmp;
+		if (tmp > runFeatures_max) runFeatures_max = tmp;
 	}
 	
-//	runFeatures /= (double)runs.size();
+	runFeatures /= (double)runs.size();
 	
 	endFeatures = endStates.getFeatureCount(cidx, threshold, cIndex);
 	
@@ -286,12 +299,12 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 	if (f == NULL)
 	{
 		f=fopen(filename.c_str(), "wb");
-		fprintf(f,"Runs, runFeatures, finalFeatures, difference\n");
+		fprintf(f,"Runs, runFeatures_avg, runFeatures_max, finalFeatures, difference\n");
 		fclose(f);
 	} else fclose(f);
 	
 	f = fopen(filename.c_str(), "a");
-	fprintf(f,"%d, %.6g, %.6g, %.6g\n", simidx, runFeatures, (double)endFeatures, (double)(endFeatures - runFeatures));
+	fprintf(f,"%d, %.6g, %.6g, %.6g\n", simidx, runFeatures, runFeatures_max, (double)endFeatures, (double)(endFeatures - runFeatures));
 	fclose(f);
 }
 
@@ -343,6 +356,9 @@ void AnalysisHeredity::onSimulationEnd(SimulationRequest *SR)
 	
 	endStates.frames.push_back(HS);
 	
+	int oPeriod = numParams["OUTPUT_PERIOD"];
+	
+	if (endStates.frames.size() % oPeriod != 0) return;
 	// Lets do output up to this point now
 
 	if (strParams["PCA_ANALYSIS"] != "false")
@@ -371,6 +387,7 @@ AnalysisHeredity::AnalysisHeredity()
 	endCallback = 1;
 	beginCallback = 1;
 	
+	numParams["OUTPUT_PERIOD"] = 1;
 	strParams["RANDOM_KNOCKOUTS"] = "false";
 	numParams["KNOCKOUT_COUNT"] = 10;
 	numParams["KNOCKOUT_MEAN_WILDCARD_LENGTH"] = 1;

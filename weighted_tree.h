@@ -22,8 +22,12 @@ class Tree
 		Node *Root;
 		unordered_map<string, Node*> accessHash;
 		void deleteLeaf(Node *N);
-		Node *addNewLeaf(string val, double w);
+		Node *addNewLeaf(string &val, double w);
+		void addSubtree(Node *N);
 		
 		Tree();
+		Tree(const Tree &other);
 		~Tree();
+		
+		Tree &operator=(const Tree &other);
 };

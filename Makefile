@@ -1,5 +1,5 @@
 CC = g++
-CFLAGS = -O6 -m64 -std=c++0x -w -fpermissive
+CFLAGS = -O6 -m64 -std=c++0x -w -fpermissive -g
 LIBS = -lm -lboost_system -lboost_filesystem -larmadillo
 
 ANALYSES = analyses/analysisDistribution.o analyses/analysisHeredity.o analyses/analysisReactionNet.o analyses/analysisOutputTimeseries.o

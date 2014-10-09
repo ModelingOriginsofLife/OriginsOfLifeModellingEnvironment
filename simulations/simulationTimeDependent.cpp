@@ -37,6 +37,7 @@ bool SimulationTimeDependent::Iterate(ChemistryComputation &C)
 void SimulationTimeDependent::setupSimulation(ChemistryComputation &C)
 {
 	System = C.simTemplate;
+	
 	System.connectToChemistry(&C);
 	iter = 0;
 	
@@ -58,7 +59,12 @@ SimulationRequest *SimulationTimeDependent::clone()
 void SimulationTimeDependent::executeSimulation(ChemistryComputation &C)
 {
 	for (int i=0;i<numParams["REPEAT"];i++)
-	{		
+	{	
+		// Delete the reaction hash to save memory on repeat runs
+		// TODO: Need a control parameter for this
+		C.reactionHash.clear();
+		C.compoundHash.clear();
+		
 		doSimulation(C);
 	}
 }

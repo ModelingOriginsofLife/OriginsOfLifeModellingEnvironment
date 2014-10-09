@@ -4,6 +4,7 @@ X Finish adding simulation/analysis/output control framework
 	X Create Network Exploration mode
 	X Create Reaction Network Output
 	Heredity Analysis
+	- Fix PCA
 	Packard Plot Analysis
 	Autocatalysis detection
 	Transition matrix Output
@@ -11,9 +12,9 @@ X Finish adding simulation/analysis/output control framework
 - Allow assigning compounds 'energy' or other derived quantities, with the possibility of using them in an equation for the reaction rates or other things
 -- Need some kind of built-in scripting language to allow these equations to be user-defined
 
-- Make sure isReversed modifier is applied correctly in applyRule
+X Make sure isReversed modifier is applied correctly in applyRule
 
-- Make sure buffer/non-buffer works correctly
+X Make sure buffer/non-buffer works correctly
 
 - Add language for describing energies of compounds, allow Boltzmann
 factor in reactions
@@ -33,3 +34,4 @@ situation calls for it.
 - Generalize rules for population-based reaction weighting
 
 - Consider control structures that allow analyses to be tied to specific regions more generally, or to repeat analyses for each region separately, or to average over the entire system
+

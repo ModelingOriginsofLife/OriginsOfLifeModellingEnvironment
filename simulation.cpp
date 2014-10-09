@@ -21,7 +21,7 @@ void SimulationRequest::doSimulation(ChemistryComputation &C)
 			C.analyses[i]->onSimulationBegin(this);					
 		}
 	}
-	
+			
 	int globalIterCounter = 0;
 	while (!Iterate(C))
 	{
