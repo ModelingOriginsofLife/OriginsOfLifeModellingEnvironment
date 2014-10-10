@@ -204,16 +204,30 @@ void AnalysisHeredity::PCAHeredity()
 	
 	printf("Performing PCA of %d x %d matrix\n", data.n_rows, data.n_cols);
 	
-	doPCA(data, eigvals, princomps, scores, nVals);
-
 	string outputSubDirectory = strParams["OUTPUT_DIR_PCA"];
 		
 	if (!directoryExists(outputSubDirectory))
 		makeDirectory(outputSubDirectory);
 		
-	string filename = outputSubDirectory + "/eigenvalues.txt";
+	string filename = outputSubDirectory + "/rawdata.txt";
+	FILE *f = fopen(filename.c_str(),"wb");
 	
-	FILE *f=fopen(filename.c_str(),"wb");
+	for (int i=0;i<data.n_rows;i++)
+	{
+		for (int j=0;j<data.n_cols;j++)
+		{
+			fprintf(f,"%.9g ", data(i,j));
+		}
+		fprintf(f,"\n");
+	}
+	fclose(f);
+	
+	normalizeData(data);	
+	doPCA(data, eigvals, princomps, scores, nVals);
+	
+	filename = outputSubDirectory + "/eigenvalues.txt";
+	
+	f=fopen(filename.c_str(),"wb");
 	
 	for (int i=0;i<eigvals.n_rows;i++)
 		fprintf(f,"%.9g\n", eigvals(i));
@@ -261,18 +275,6 @@ void AnalysisHeredity::PCAHeredity()
 		fprintf(f,"\n");
 	}
 	fclose(f);
-
-	filename = outputSubDirectory + "/rawdata.txt";
-	f = fopen(filename.c_str(),"wb");
-	for (int i=0;i<data.n_rows;i++)
-	{
-		for (int j=0;j<data.n_cols;j++)
-		{
-			fprintf(f,"%.9g ", data(i,j));
-		}
-		fprintf(f,"\n");
-	}
-	fclose(f);
 }
 
 void AnalysisHeredity::FeatureEliminationHeredity()
@@ -304,7 +306,7 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 	} else fclose(f);
 	
 	f = fopen(filename.c_str(), "a");
-	fprintf(f,"%d, %.6g, %.6g, %.6g\n", simidx, runFeatures, runFeatures_max, (double)endFeatures, (double)(endFeatures - runFeatures));
+	fprintf(f,"%d, %.6g, %.6g, %.6g %.6g\n", simidx, runFeatures, runFeatures_max, (double)endFeatures, (double)(endFeatures - runFeatures));
 	fclose(f);
 }
 
