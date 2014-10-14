@@ -8,7 +8,7 @@ class HeredityRunData
 {
 	public:
 		vector<HereditySnapshot> frames;
-		int getFeatureCount(int vCols, double threshold, unordered_map<string, int> &cIndex);
+		int getFeatureCount(int vCols, double threshold, unordered_map<string, int> &cIndex, string outfile, vector<char> &features);
 		
 		double getEntropy();
 };
@@ -32,6 +32,7 @@ class AnalysisHeredity: public AnalysisRequest
 		int cidx; // This keeps track of novel compounds
 		
 		unordered_map<string, int> cIndex;
+		unordered_map<int, string> rIndex;
 		vector<HeredityRunData> runs;
 		
 		HeredityRunData endStates;

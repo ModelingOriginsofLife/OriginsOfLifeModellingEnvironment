@@ -32,7 +32,7 @@ void SimulationRequest::doSimulation(ChemistryComputation &C)
 			{
 				C.analyses[i]->iterCounter++;
 				
-				if ((C.analyses[i]->iterCounter >= C.analyses[i]->numParams["PERIOD"]) && (C.analyses[i]->iterCounter >= C.analyses[i]->numParams["BEGIN_ITER"]))
+				if ((C.analyses[i]->iterCounter >= C.analyses[i]->numParams["PERIOD"]) && (globalIterCounter >= C.analyses[i]->numParams["BEGIN_ITER"]))
 				{
 					int end = C.analyses[i]->numParams["END_ITER"];
 					

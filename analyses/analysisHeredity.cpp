@@ -1,11 +1,20 @@
 #include "../includes.h"
 
-int HeredityRunData::getFeatureCount(int vCols, double threshold, unordered_map<string, int> &cIndex)
+int HeredityRunData::getFeatureCount(int vCols, double threshold, unordered_map<string, int> &cIndex, string outfile, vector<char> &features)
 {
 	int maxval = frames.size();
+	FILE *f;
 	
+	if (features.size() < vCols)
+		features.resize(vCols, 0);
+		
 	mat data(maxval, vCols, fill::ones);
 	
+	rowvec idxTracker(vCols, fill::zeros);
+	
+	for (int j=0;j<vCols;j++)
+		idxTracker[j] = j;
+		
 	data = -1 * data;
 	
 	mat cov;
@@ -23,6 +32,18 @@ int HeredityRunData::getFeatureCount(int vCols, double threshold, unordered_map<
 		}
 	}
 	
+	if (outfile.length()>0)
+	{
+		f=fopen(outfile.c_str(),"wb");
+		for (int j=0;j<frames.size();j++)
+		{
+			for (int i=0;i<vCols;i++)
+				fprintf(f,"%.6f ", data(j,i));
+			fprintf(f,"\n");
+		}
+		fclose(f);
+	}
+	
 	cov = data.t() * data / maxval;
 	
 	for (int i=0;i<cov.n_rows;i++)
@@ -34,11 +55,15 @@ int HeredityRunData::getFeatureCount(int vCols, double threshold, unordered_map<
 			{
 				cov.shed_row(i);
 				cov.shed_col(i);
+				idxTracker.shed_col(i);
 				i--;
 				stop=true;
 			}
 		}
 	}
+	
+	for (int i=0;i<idxTracker.n_cols;i++)
+		features[idxTracker[i]] = 1;
 	
 	return cov.n_rows;
 }
@@ -105,12 +130,15 @@ void AnalysisHeredity::onIteration(SimulationRequest *SR)
 			if (accept)
 				if (it->second->weight >= threshold)
 				{
-					if (!cIndex.count(it->first))
+					string strcopy = it->first;
+					
+					if (!cIndex.count(strcopy))
 					{
-						cIndex[it->first] = cidx++;
+						rIndex[cidx] = strcopy;
+						cIndex[strcopy] = cidx++;
 					}
 								
-					HS.compounds.insert(it->first);
+					HS.compounds.insert(strcopy);
 				}			
 		}
 	}
@@ -204,7 +232,7 @@ void AnalysisHeredity::PCAHeredity()
 	
 	printf("Performing PCA of %d x %d matrix\n", data.n_rows, data.n_cols);
 	
-	string outputSubDirectory = strParams["OUTPUT_DIR_PCA"];
+	string outputSubDirectory = strParams["OUTPUT_DIR"];
 		
 	if (!directoryExists(outputSubDirectory))
 		makeDirectory(outputSubDirectory);
@@ -280,23 +308,67 @@ void AnalysisHeredity::PCAHeredity()
 void AnalysisHeredity::FeatureEliminationHeredity()
 {
 	int endFeatures;
-	double runFeatures = 0, runFeatures_max = 0;	
+	double runFeatures = 0, runFeatures_max = 0, runFeatures_total = 0;	
 	double threshold = numParams["FEATURE_ELIMINATION_THRESHOLD"];
+	vector<char> runFeaturesArray, endFeaturesArray;
 	
+	string outputSubDirectory = strParams["OUTPUT_DIR"];
+		
+	if (!directoryExists(outputSubDirectory))
+		makeDirectory(outputSubDirectory);
+		
 	for (int i=0;i<runs.size();i++)
 	{
-		double tmp = runs[i].getFeatureCount(cidx, threshold, cIndex);
+		double tmp = runs[i].getFeatureCount(cidx, threshold, cIndex, "", runFeaturesArray);
 		runFeatures += tmp;
 		if (tmp > runFeatures_max) runFeatures_max = tmp;
 	}
-	
+			
 	runFeatures /= (double)runs.size();
 	
-	endFeatures = endStates.getFeatureCount(cidx, threshold, cIndex);
+	endFeatures = endStates.getFeatureCount(cidx, threshold, cIndex, "", endFeaturesArray);
 	
-	string filename = strParams["FEATURE_ELIMINATION_OUTPUT"];	
+	string filename;
+	FILE *f;
 	
-	FILE *f = fopen(filename.c_str(), "rb");
+	for (int i=0;i<runFeaturesArray.size();i++)
+		runFeatures_total += runFeaturesArray[i];
+	
+	if (strParams["FLUCTUATION_FEATURES"].length())
+	{
+		filename = outputSubDirectory + "/" + strParams["FLUCTUATION_FEATURES"];
+		f = fopen(filename.c_str(), "wb");
+		
+		for (int i=0;i<runFeaturesArray.size();i++)
+		{
+			if (runFeaturesArray[i])
+			{
+				fprintf(f,"%s\n", rIndex[i].c_str());
+			}
+		}
+		
+		fclose(f);
+	}
+	
+	if (strParams["ENDING_FEATURES"].length())
+	{
+		filename = outputSubDirectory + "/" + strParams["ENDING_FEATURES"];
+		f = fopen(filename.c_str(), "wb");
+
+		for (int i=0;i<endFeaturesArray.size();i++)
+		{
+			if (endFeaturesArray[i])
+			{
+				fprintf(f,"%s\n", rIndex[i].c_str());
+			}
+		}
+		
+		fclose(f);
+	}
+	
+	filename = outputSubDirectory + "/" + strParams["FEATURE_ELIMINATION_OUTPUT"];	
+	
+	f = fopen(filename.c_str(), "rb");
 	
 	if (f == NULL)
 	{
@@ -306,7 +378,7 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 	} else fclose(f);
 	
 	f = fopen(filename.c_str(), "a");
-	fprintf(f,"%d, %.6g, %.6g, %.6g %.6g\n", simidx, runFeatures, runFeatures_max, (double)endFeatures, (double)(endFeatures - runFeatures));
+	fprintf(f,"%d, %.6g, %.6g, %.6g, %.6g, %.6g\n", simidx, runFeatures, runFeatures_total, (double)endFeatures, (double)(endFeatures - runFeatures), (double)(endFeatures - runFeatures_total));
 	fclose(f);
 }
 
@@ -346,12 +418,15 @@ void AnalysisHeredity::onSimulationEnd(SimulationRequest *SR)
 		{
 			if (it->second->weight >= threshold)
 			{
-				if (!cIndex.count(it->first))
+				string strcopy = it->first;
+				
+				if (!cIndex.count(strcopy))
 				{
-					cIndex[it->first] = cidx++;
+					rIndex[cidx] = strcopy;
+					cIndex[strcopy] = cidx++;
 				}
 								
-				HS.compounds.insert(it->first);
+				HS.compounds.insert(strcopy);
 			}			
 		}
 	}
@@ -359,6 +434,7 @@ void AnalysisHeredity::onSimulationEnd(SimulationRequest *SR)
 	endStates.frames.push_back(HS);
 	
 	int oPeriod = numParams["OUTPUT_PERIOD"];
+	simidx++;
 	
 	if (endStates.frames.size() % oPeriod != 0) return;
 	// Lets do output up to this point now
@@ -376,9 +452,7 @@ void AnalysisHeredity::onSimulationEnd(SimulationRequest *SR)
 	if (strParams["ENTROPY_ANALYSIS"] != "false")
 	{
 		EntropyHeredity();
-	}
-	
-	simidx++;
+	}	
 }
 
 AnalysisHeredity::AnalysisHeredity()
@@ -398,8 +472,8 @@ AnalysisHeredity::AnalysisHeredity()
 	strParams["PCA_ANALYSIS"] = "false";
 	strParams["FEATURE_ELIMINATION_ANALYSIS"] = "false";
 	strParams["FEATURE_ELIMINATION_OUTPUT"] = "heredity_elimination.txt";
-	numParams["FEATURE_ELIMINATION_THRESHOLD"] = 0.9;
-	strParams["OUTPUT_DIR_PCA"] = "heredity_PCA";
+	numParams["FEATURE_ELIMINATION_THRESHOLD"] = 0.89;
+	strParams["OUTPUT_DIR"] = "heredity";
 	strParams["ENTROPY_ANALYSIS"] = "false";
 	strParams["ENTROPY_OUTPUT"] = "heredity_entropy.txt";
 	
