@@ -46,3 +46,4 @@ using namespace arma;
 #include "analyses/analysisOutputTimeseries.h"
 #include "analyses/analysisHeredity.h"
 #include "analyses/analysisReactionNet.h"
+#include "analyses/analysisSaveKnockouts.h"

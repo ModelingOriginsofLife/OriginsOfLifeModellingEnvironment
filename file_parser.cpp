@@ -311,7 +311,12 @@ void ChemistryComputation::parseConfig(ifstream& file)
 			if (str == "LENGTH") singletRate = WEIGHT_HEAVYLENGTH;
 			else if (str == "MOLECULE") singletRate = WEIGHT_HEAVY;
 		}
+		else if (substr == "OUTPUT_DIR")
+		{
+			headerDirectory = str;
+		}
 		else if (substr=="ENDSECTION") istop=1;
+		
 	} while (!istop);
 }
 

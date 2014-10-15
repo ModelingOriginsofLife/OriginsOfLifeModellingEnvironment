@@ -60,6 +60,7 @@ class ReactionRule
 		
 		vector<vector<string>> getAllProducts(vector<string> &reactants, Library &L);
 		void parseRule(Library &L);
+		void clearRule();
 };
 
 extern string reverseString(string S);

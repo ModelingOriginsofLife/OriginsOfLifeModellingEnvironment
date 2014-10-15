@@ -23,6 +23,8 @@ class AnalysisHeredity: public AnalysisRequest
 		void PCAHeredity();
 		void FeatureEliminationHeredity();
 		void EntropyHeredity();
+		bool checkAgainstKnockouts(string compound, Library &L);
+		string AnalysisHeredity::getSubdirectory(string dir);
 	
 		AnalysisRequest *clone();
 		AnalysisHeredity();		
@@ -30,6 +32,10 @@ class AnalysisHeredity: public AnalysisRequest
 	private:
 		int simidx; // This keeps track of the simulation index in a sheaf of multiple simulations
 		int cidx; // This keeps track of novel compounds
+		string subdirectory;
+		
+		ReactionRule RRule;
+		unordered_set<string> knockoutList;
 		
 		unordered_map<string, int> cIndex;
 		unordered_map<int, string> rIndex;

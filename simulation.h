@@ -58,7 +58,7 @@ class Simulation
 		vector<Region> regions;
 		ChemistryComputation *parentChem;
 		unordered_set<string> knockouts;
-		
+
 		void connectToChemistry(ChemistryComputation *C);
 		void Iterate(IterationParams &I);
 		void writePopulationText(char *directory);
@@ -124,12 +124,15 @@ class SimulationRequest
 {
 	public:
 		string simType;
+		string headerDirectory;
+		ChemistryComputation *parentChem;
 		virtual void setupSimulation(ChemistryComputation &C)=0;
 		virtual bool Iterate(ChemistryComputation &C)=0; // Run a single pass of this simulation type. Returns true if the simulation has ended. Some analyses run every iteration (or every N iterations), whereas others run on completion
 		void doSimulation(ChemistryComputation &C);
 		virtual void executeSimulation(ChemistryComputation &C) { doSimulation(C); }
 		virtual SimulationRequest *clone()=0;
-		void parse(ifstream &file);
+		void parse(ifstream &file);	
+		string getSubdirectory(string str);
 		
 		unordered_map<string, double> numParams;
 		unordered_map<string, string> strParams;
@@ -150,6 +153,7 @@ class AnalysisRequest;
 class ChemistryComputation 
 {
 	public:
+		string headerDirectory;
 		Library L;
 		vector<ReactionRule> reactions;
 		WeightingType singletRate; // Whether singlet reactions are weighted by molecule count or total length
@@ -164,6 +168,7 @@ class ChemistryComputation
 		vector<SimulationRequest*> jobs;
 		vector<AnalysisRequest*> analyses;
 		
+		string getSubdirectory(string dir);
 		void parseSingleConjugateSet(ifstream& file, int setidx);
 		void parseConjugates(ifstream& file);
 		void parseLibrary(ifstream& file);

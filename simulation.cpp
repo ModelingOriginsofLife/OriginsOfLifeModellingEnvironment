@@ -11,6 +11,7 @@ void registerSimulations()
 void SimulationRequest::doSimulation(ChemistryComputation &C)
 {
 	C.curSimType = simType;
+	parentChem = &C;
 	
 	setupSimulation(C);
 	

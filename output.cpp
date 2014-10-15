@@ -50,3 +50,23 @@ void makeDirectory(string dir)
 	using namespace boost::filesystem;
 	create_directory(dir);
 }
+
+string SimulationRequest::getSubdirectory(string dir)
+{
+	string curheader = parentChem->getSubdirectory(headerDirectory);
+	
+	if (!directoryExists(curheader))
+		makeDirectory(curheader);		
+	
+	return curheader + dir;
+}
+
+string ChemistryComputation::getSubdirectory(string dir)
+{
+	string totaldir = headerDirectory + dir;
+	
+	if (!directoryExists(headerDirectory))
+		makeDirectory(headerDirectory);		
+	
+	return totaldir;
+}

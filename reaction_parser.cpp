@@ -679,3 +679,18 @@ string generateRandomCompound(string rulestr, ChemistryComputation &C, double me
 		
 	return compound;
 }
+
+void ReactionRule::clearRule()
+{
+	for (int i=0;i<reacRules.size();i++)
+	{
+		reacRules[i].clear();
+	}
+	for (int i=0;i<prodRules.size();i++)
+	{
+		prodRules[i].clear();
+	}
+	
+	reacRules.clear();
+	prodRules.clear();
+}

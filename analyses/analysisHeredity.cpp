@@ -94,6 +94,25 @@ double HeredityRunData::getEntropy()
 	return H;
 }
 
+bool AnalysisHeredity::checkAgainstKnockouts(string compound, Library &L)
+{
+	// Exclude compounds that match the knockout rule
+	if (strParams["RANDOM_KNOCKOUTS"] != "false")
+	{
+		if (strParams["KNOCKOUT_RULE"].length())
+		{
+			if (RRule.matchCompound(compound, L))
+			{
+				return false;
+			}
+		}
+		if (knockoutList.count(compound))
+			return false;
+	}
+	
+	return true;
+}
+
 void AnalysisHeredity::onIteration(SimulationRequest *SR)
 {
 	SimulationTimeDependent *S = (SimulationTimeDependent*)SR;
@@ -102,14 +121,7 @@ void AnalysisHeredity::onIteration(SimulationRequest *SR)
 	
 	// Regions are all lumped together - lets do this differently in the future, or give multiple options
 	HereditySnapshot HS;
-	ReactionRule RRule;
-	
-	if (strParams["RANDOM_KNOCKOUTS"] != "false")
-	{
-		RRule.rule = strParams["KNOCKOUT_RULE"];
-		RRule.parseRule(Sim->parentChem->L);
-	}
-	
+		
 	for (int i=0;i<Sim->regions.size();++i)
 	{
 		Region *R = &Sim->regions[i];		
@@ -117,16 +129,8 @@ void AnalysisHeredity::onIteration(SimulationRequest *SR)
 				
 		for (it=R->population.accessHash.begin();it!=R->population.accessHash.end();++it)
 		{
-			bool accept = true;
-			// Exclude compounds that match the knockout rule
-			if (strParams["RANDOM_KNOCKOUTS"] != "false")
-			{
-				if (RRule.matchCompound(it->first, Sim->parentChem->L))
-				{
-					accept = false;
-				}
-			}
-
+			bool accept = checkAgainstKnockouts(it->first, Sim->parentChem->L);
+			
 			if (accept)
 				if (it->second->weight >= threshold)
 				{
@@ -151,6 +155,8 @@ void AnalysisHeredity::onSimulationBegin(SimulationRequest *SR)
 	SimulationTimeDependent *S = (SimulationTimeDependent*)SR;
 	ChemistryComputation *C = S->System.parentChem;
 	
+	subdirectory = C->getSubdirectory(strParams["OUTPUT_DIR"]);
+	
 	iterCounter = 0;
 	
 	if (strParams["RANDOM_KNOCKOUTS"]!="false")
@@ -159,9 +165,53 @@ void AnalysisHeredity::onSimulationBegin(SimulationRequest *SR)
 		double wildlength = numParams["KNOCKOUT_MEAN_WILDCARD_LENGTH"];
 		string rule = strParams["KNOCKOUT_RULE"];
 		
+		if (rule.length())
+		{		
+			RRule.clearRule();
+			RRule.rule = strParams["KNOCKOUT_RULE"];
+			RRule.parseRule(S->System.parentChem->L);
+		}		
+		
+		if (strParams["KNOCKOUT_FILE"].length())
+		{
+			knockoutList.clear();
+			FILE *f=fopen(strParams["KNOCKOUT_FILE"].c_str(),"rb");
+			char koBuf[1024];
+			
+			while(fscanf(f,"%s",koBuf)!=EOF)
+			{
+				string str = koBuf;
+				knockoutList.insert(str);
+			}
+			
+			fclose(f);
+		}
+
 		for (int i=0;i<nKnock;i++)
 		{
-			string compound = generateRandomCompound(rule, *C, wildlength);
+			int whichtype = 0;
+			
+			if (rule.length() && strParams["KNOCKOUT_FILE"].length()) whichtype = irand(2)+1;
+			else if (rule.length()) whichtype = 1;
+			else if (strParams["KNOCKOUT_FILE"].length()) whichtype = 2;
+			
+			string compound;
+			
+			switch (whichtype)
+			{
+				case 1: // Rule-based
+					compound = generateRandomCompound(rule, *C, wildlength);
+					break;
+				case 2: // Table-based
+					int idx = irand(knockoutList.size());
+					unordered_set<string>::iterator it = knockoutList.begin();
+					
+					for (int i=0;i<idx;i++)
+						++it;
+					
+					compound = *it;
+					break;
+			}
 			
 			if (compound.length())
 			{
@@ -180,34 +230,6 @@ void AnalysisHeredity::PCAHeredity()
 	int maxval = endStates.frames.size();
 	vector<int> cCount;
 	vector<int> cMap;
-/*	
-	cCount.resize(cidx, 0);	
-	
-	for (int j=0;j<maxval;j++)
-	{
-		for (unordered_set<string>::iterator it = endStates.frames[j].compounds.begin(); it != endStates.frames[j].compounds.end(); ++it)
-		{
-			int idx = cIndex[*it];
-			cCount[idx]++;
-		}
-	}
-	
-	int k=0;
-	
-	for (int j=0;j<cidx;j++)
-	{
-		if ((cCount[j] == 0)||(cCount[j] == maxval))
-		{
-			cMap.push_back(-1);
-			vCols--;
-		}
-		else
-		{
-			cMap.push_back(k);
-			k++;
-		}
-	}
-	*/
 	mat data(maxval, vCols, fill::zeros);
 	
 	for (int j=0;j<maxval;j++)
@@ -231,13 +253,8 @@ void AnalysisHeredity::PCAHeredity()
 	if (maxval < nVals) nVals = maxval;
 	
 	printf("Performing PCA of %d x %d matrix\n", data.n_rows, data.n_cols);
-	
-	string outputSubDirectory = strParams["OUTPUT_DIR"];
-		
-	if (!directoryExists(outputSubDirectory))
-		makeDirectory(outputSubDirectory);
-		
-	string filename = outputSubDirectory + "/rawdata.txt";
+			
+	string filename = getSubdirectory("/rawdata.txt");
 	FILE *f = fopen(filename.c_str(),"wb");
 	
 	for (int i=0;i<data.n_rows;i++)
@@ -253,7 +270,7 @@ void AnalysisHeredity::PCAHeredity()
 	normalizeData(data);	
 	doPCA(data, eigvals, princomps, scores, nVals);
 	
-	filename = outputSubDirectory + "/eigenvalues.txt";
+	filename = getSubdirectory("/eigenvalues.txt");
 	
 	f=fopen(filename.c_str(),"wb");
 	
@@ -275,7 +292,7 @@ void AnalysisHeredity::PCAHeredity()
 		if (eigvals(i) > threshold*0.05) cutoff[3]++;
 	}
 
-	filename = outputSubDirectory + "/heredity_measure.csv";	
+	filename = getSubdirectory("/heredity_measure.csv");	
 	
 	f=fopen(filename.c_str(),"rb");
 	
@@ -291,7 +308,7 @@ void AnalysisHeredity::PCAHeredity()
 	fprintf(f,"%d, %.9g, %.9g, %.9g, %.9g\n", simidx, cutoff[0]+1, cutoff[1]+1, cutoff[2]+1, cutoff[3]+1);
 	fclose(f);
 
-	filename = outputSubDirectory + "/pca_scores.txt";	
+	filename = getSubdirectory("/pca_scores.txt");
 	
 	f=fopen(filename.c_str(),"wb");
 	for (int i=0;i<scores.n_rows;i++)
@@ -311,12 +328,7 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 	double runFeatures = 0, runFeatures_max = 0, runFeatures_total = 0;	
 	double threshold = numParams["FEATURE_ELIMINATION_THRESHOLD"];
 	vector<char> runFeaturesArray, endFeaturesArray;
-	
-	string outputSubDirectory = strParams["OUTPUT_DIR"];
-		
-	if (!directoryExists(outputSubDirectory))
-		makeDirectory(outputSubDirectory);
-		
+					
 	for (int i=0;i<runs.size();i++)
 	{
 		double tmp = runs[i].getFeatureCount(cidx, threshold, cIndex, "", runFeaturesArray);
@@ -336,7 +348,7 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 	
 	if (strParams["FLUCTUATION_FEATURES"].length())
 	{
-		filename = outputSubDirectory + "/" + strParams["FLUCTUATION_FEATURES"];
+		filename = getSubdirectory(strParams["FLUCTUATION_FEATURES"]);
 		f = fopen(filename.c_str(), "wb");
 		
 		for (int i=0;i<runFeaturesArray.size();i++)
@@ -352,7 +364,7 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 	
 	if (strParams["ENDING_FEATURES"].length())
 	{
-		filename = outputSubDirectory + "/" + strParams["ENDING_FEATURES"];
+		filename = getSubdirectory(strParams["ENDING_FEATURES"]);
 		f = fopen(filename.c_str(), "wb");
 
 		for (int i=0;i<endFeaturesArray.size();i++)
@@ -366,7 +378,7 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 		fclose(f);
 	}
 	
-	filename = outputSubDirectory + "/" + strParams["FEATURE_ELIMINATION_OUTPUT"];	
+	filename = getSubdirectory(strParams["FEATURE_ELIMINATION_OUTPUT"]);	
 	
 	f = fopen(filename.c_str(), "rb");
 	
@@ -382,6 +394,16 @@ void AnalysisHeredity::FeatureEliminationHeredity()
 	fclose(f);
 }
 
+string AnalysisHeredity::getSubdirectory(string dir)
+{
+	string outputSubDirectory = subdirectory+"/";
+	
+	if (!directoryExists(outputSubDirectory))
+		makeDirectory(outputSubDirectory);
+		
+	return outputSubDirectory + dir;
+}
+
 void AnalysisHeredity::EntropyHeredity()
 {
 	double Hbar = 0, Hcross = 0;
@@ -393,7 +415,7 @@ void AnalysisHeredity::EntropyHeredity()
 	
 	Hcross = endStates.getEntropy();
 	
-	string filename = strParams["ENTROPY_OUTPUT"];
+	string filename = getSubdirectory(strParams["ENTROPY_OUTPUT"]);
 	
 	FILE *f = fopen(filename.c_str(), "a");
 	fprintf(f,"%d, %.6g, %.6g, %.6g\n", simidx, Hbar, Hcross, Hcross-Hbar);
@@ -469,6 +491,7 @@ AnalysisHeredity::AnalysisHeredity()
 	numParams["KNOCKOUT_MEAN_WILDCARD_LENGTH"] = 1;
 	numParams["DETECTION_THRESHOLD"] = 0.5;
 	strParams["KNOCKOUT_RULE"] = "";
+	strParams["KNOCKOUT_FILE"] = "";
 	strParams["PCA_ANALYSIS"] = "false";
 	strParams["FEATURE_ELIMINATION_ANALYSIS"] = "false";
 	strParams["FEATURE_ELIMINATION_OUTPUT"] = "heredity_elimination.txt";

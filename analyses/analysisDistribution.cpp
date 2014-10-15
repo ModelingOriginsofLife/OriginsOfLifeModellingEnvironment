@@ -4,7 +4,7 @@ void AnalysisDistribution::onIteration(SimulationRequest *SR)
 {
 	SimulationTimeDependent *S = (SimulationTimeDependent *)SR;
 	string datadir;
-	string outputSubDirectory = strParams["OUTPUT_DIR"];
+	string outputSubDirectory = S->getSubdirectory(strParams["OUTPUT_DIR"]);
 	char Str[512];
 		
 	printf("Writing distribution for %d\n", S->iter);

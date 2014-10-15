@@ -60,6 +60,14 @@ void SimulationTimeDependent::executeSimulation(ChemistryComputation &C)
 {
 	for (int i=0;i<numParams["REPEAT"];i++)
 	{	
+		if (numParams["REPEAT"]>1)
+		{
+			char cBuf[512];
+			sprintf(cBuf, "run%d/", i);		
+			headerDirectory = cBuf;
+		}
+		else headerDirectory = "/";
+		
 		// Delete the reaction hash to save memory on repeat runs
 		// TODO: Need a control parameter for this
 		C.reactionHash.clear();

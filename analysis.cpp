@@ -8,6 +8,7 @@ void registerAnalyses()
 	registeredAnalyses.push_back(new AnalysisOutputTimeseries);
 	registeredAnalyses.push_back(new AnalysisHeredity);
 	registeredAnalyses.push_back(new AnalysisReactionNet);
+	registeredAnalyses.push_back(new AnalysisSaveKnockouts);
 }
 
 AnalysisRequest::AnalysisRequest()
